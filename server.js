@@ -115,6 +115,75 @@ app.get('/characters', async (req, res) => {
     }
 });
 
+// Delete character endpoint
+app.delete('/character', async (req, res) => {
+    try {
+        const characterId = req.query.character_id;
+        const chatId = req.query.chat_id;
+
+        if (!characterId || !chatId) {
+            return res.status(400).json({ error: 'Character ID and Chat ID are required' });
+        }
+
+        // First, verify the character belongs to the specified chat
+        const verifyQuery = `
+            SELECT id FROM personajes 
+            WHERE id = $1 AND chat_id = $2
+        `;
+
+        const verifyResult = await pool.query(verifyQuery, [characterId, chatId]);
+
+        if (verifyResult.rows.length === 0) {
+            return res.status(403).json({ error: 'Character does not belong to this chat or does not exist' });
+        }
+
+        // If verification passes, delete the character
+        const deleteQuery = `
+            DELETE FROM personajes 
+            WHERE id = $1
+        `;
+
+        await pool.query(deleteQuery, [characterId]);
+
+        return res.status(200).json({ message: 'Character deleted successfully' });
+    } catch (e) {
+        logger.error(`Error in delete character endpoint: ${e.message}`);
+        return res.status(500).json({ error: `Server error: ${e.message}` });
+    }
+});
+
+// Delete all characters for a chat ID endpoint
+app.delete('/characters', async (req, res) => {
+    try {
+        const chatId = req.query.chat_id;
+
+        if (!chatId) {
+            return res.status(400).json({ error: 'Chat ID is required' });
+        }
+
+        // Delete all characters for the given chat ID
+        const deleteQuery = `
+            DELETE FROM personajes 
+            WHERE chat_id = $1
+            RETURNING id
+        `;
+
+        const result = await pool.query(deleteQuery, [chatId]);
+
+        if (result.rowCount === 0) {
+            return res.status(404).json({ message: 'No characters found for this chat ID' });
+        }
+
+        return res.status(200).json({
+            message: 'All characters deleted successfully',
+            count: result.rowCount
+        });
+    } catch (e) {
+        logger.error(`Error in delete all characters endpoint: ${e.message}`);
+        return res.status(500).json({ error: `Server error: ${e.message}` });
+    }
+});
+
 // Start the server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, '0.0.0.0', async () => {
