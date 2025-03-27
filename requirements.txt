@@ -2,4 +2,4 @@ flask
 flask-sqlalchemy
 psycopg2-binary
 gunicorn
-supabase==0.2.3
+supabase
