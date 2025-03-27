@@ -1,52 +1,86 @@
-from flask import Flask, request, jsonify
 import os
 from supabase import create_client, Client
-
-app = Flask(__name__)
-
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+from typing import Optional, Dict, Any, List
+import uvicorn
 
 # Configuración de Supabase
-SUPABASE_URL = os.getenv('SUPABASE_URL')
-SUPABASE_KEY = os.getenv('SUPABASE_KEY')
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-@app.route('/get_last_fight', methods=['POST'])
-def get_last_fight():
-    data = request.json
-    chat_id = data.get('chat_id')
+# Crear aplicación FastAPI
+app = FastAPI(
+    title="RPG Game Microservice",
+    description="Microservicio para juego de rol que consulta la última pelea del último personaje",
+    version="1.0.0",
+)
 
-    if not chat_id:
-        return jsonify({'error': 'chat_id is required'}), 400
 
+class ChatRequest(BaseModel):
+    chat_id: str
+
+
+@app.get("/")
+def read_root():
+    return {"message": "RPG Game Microservice API"}
+
+
+@app.post("/last-fight", response_model=Dict[str, Any])
+async def get_last_fight(request: ChatRequest):
     try:
-        # Obtener el último personaje del chat_id dado
-        last_character_response = supabase.table('personajes') \
-            .select('id') \
-            .eq('chat_id', chat_id) \
-            .order('id', desc=True) \
-            .limit(1) \
-            .execute()
+        # Ejecutar la consulta en Supabase utilizando el método rpc
+        result = supabase.rpc(
+            "get_last_fight", {"chat_id_param": request.chat_id}
+        ).execute()
 
-        if not last_character_response.data:
-            return jsonify({'message': 'No character found for the given chat_id'}), 404
+        # Verificar si hay resultados
+        if not result.data or len(result.data) == 0:
+            raise HTTPException(
+                status_code=404, detail="No se encontraron peleas para este chat"
+            )
 
-        last_character_id = last_character_response.data[0]['id']
-
-        # Obtener la última pelea asociada al personaje
-        last_fight_response = supabase.table('fights') \
-            .select('*') \
-            .eq('character_id', last_character_id) \
-            .order('id', desc=True) \
-            .limit(1) \
-            .execute()
-
-        if last_fight_response.data:
-            return jsonify(last_fight_response.data[0]), 200
-        else:
-            return jsonify({'message': 'No fights found for the given character'}), 404
+        return {"fight": result.data[0]}
 
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        raise HTTPException(
+            status_code=500, detail=f"Error al consultar la base de datos: {str(e)}"
+        )
 
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+
+@app.post("/last-fight-raw", response_model=Dict[str, Any])
+async def get_last_fight_raw(request: ChatRequest):
+    try:
+        # Consulta SQL directa (alternativa)
+        query = f"""
+        WITH LastCharacter AS (
+            SELECT id FROM personajes 
+            WHERE chat_id = '{request.chat_id}'
+            ORDER BY id DESC LIMIT 1
+        )
+        SELECT f.* FROM fights f 
+        JOIN LastCharacter lc ON f.character_id = lc.id 
+        ORDER BY f.id DESC LIMIT 1
+        """
+
+        result = supabase.table("fights").select("*").execute(query=query)
+
+        # Verificar si hay resultados
+        if not result.data or len(result.data) == 0:
+            raise HTTPException(
+                status_code=404, detail="No se encontraron peleas para este chat"
+            )
+
+        return {"fight": result.data[0]}
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Error al consultar la base de datos: {str(e)}"
+        )
+
+
+# Para ejecución local
+if __name__ == "__main__":
+    port = int(os.getenv("PORT", 8000))
+    uvicorn.run("main:app", host="0.0.0.0", port=port, reload=True)
