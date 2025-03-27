@@ -11,8 +11,7 @@ pip install -r requirements.txt
 
 2. Configurar variables de entorno:
 ```
-export SUPABASE_URL=your_supabase_url
-export SUPABASE_KEY=your_supabase_key
+export DATABASE_URL=postgresql://usuario:contraseña@localhost:5432/nombre_db
 ```
 
 3. Ejecutar el servidor:
@@ -27,15 +26,25 @@ python main.py
 heroku create rpg-game-microservice
 ```
 
-2. Configurar variables de entorno:
+2. Añadir una base de datos PostgreSQL:
 ```
-heroku config:set SUPABASE_URL=your_supabase_url
-heroku config:set SUPABASE_KEY=your_supabase_key
+heroku addons:create heroku-postgresql:mini
 ```
 
-3. Desplegar la aplicación:
+3. Heroku configurará automáticamente la variable DATABASE_URL.
+   Para verificarla puedes ejecutar:
+```
+heroku config:get DATABASE_URL
+```
+
+4. Desplegar la aplicación:
 ```
 git push heroku main
+```
+
+5. Ejecutar el script SQL para crear las funciones personalizadas:
+```
+heroku pg:psql < sql_setup.sql
 ```
 
 ## Integración con N8N
@@ -50,5 +59,5 @@ Para usar este microservicio en un workflow de N8N:
 ## APIs disponibles
 
 - `GET /`: Verificar que el servicio está funcionando
-- `POST /last-fight`: Obtener la última pelea (usando función RPC)
+- `POST /last-fight`: Obtener la última pelea (usando función personalizada de PostgreSQL)
 - `POST /last-fight-raw`: Obtener la última pelea (usando consulta SQL directa)
