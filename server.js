@@ -48,6 +48,26 @@ class LastFightRetriever {
     }
 }
 
+// CharacterRetriever to get all characters by chat_id
+class CharacterRetriever {
+    static async getCharactersByChatId(chatId) {
+        try {
+            const query = `
+        SELECT *
+        FROM personajes
+        WHERE chat_id = $1
+        ORDER BY id DESC;
+      `;
+
+            const result = await pool.query(query, [chatId]);
+            return result.rows;
+        } catch (e) {
+            logger.error(`Database error: ${e.message}`);
+            throw e;
+        }
+    }
+}
+
 // Health check endpoint
 app.get('/', (req, res) => {
     res.json({ status: 'ok', message: 'Server is running' });
@@ -70,6 +90,27 @@ app.get('/last-fight', async (req, res) => {
         }
     } catch (e) {
         logger.error(`Error in get_last_fight endpoint: ${e.message}`);
+        return res.status(500).json({ error: `Server error: ${e.message}` });
+    }
+});
+
+// Characters endpoint
+app.get('/characters', async (req, res) => {
+    try {
+        const chatId = req.query.chat_id;
+        if (!chatId) {
+            return res.status(400).json({ error: 'Chat ID is required' });
+        }
+
+        const characters = await CharacterRetriever.getCharactersByChatId(chatId);
+
+        if (characters.length > 0) {
+            return res.status(200).json(characters);
+        } else {
+            return res.status(404).json({ message: 'No characters found for this chat ID' });
+        }
+    } catch (e) {
+        logger.error(`Error in characters endpoint: ${e.message}`);
         return res.status(500).json({ error: `Server error: ${e.message}` });
     }
 });
