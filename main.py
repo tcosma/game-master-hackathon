@@ -1,50 +1,51 @@
-from flask import Flask, jsonify, request
-from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import text
+from flask import Flask, request, jsonify
 import os
+from supabase import create_client, Client
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL')
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-db = SQLAlchemy(app)
 
-class LastFightRetriever:
-    @staticmethod
-    def get_last_fight(chat_id):
-        """
-        Recupera la última pelea para un personaje específico en un chat
-        """
-        query = text("""
-            WITH LastCharacter AS (
-                SELECT id 
-                FROM personajes 
-                WHERE chat_id = :chat_id 
-                ORDER BY id DESC 
-                LIMIT 1
-            ) 
-            SELECT f.* 
-            FROM fights f 
-            JOIN LastCharacter lc ON f.character_id = lc.id 
-            ORDER BY f.id DESC 
-            LIMIT 1
-        """)
-        
-        result = db.engine.execute(query, {'chat_id': chat_id}).fetchone()
-        return dict(result) if result else None
+# Configuración de Supabase
+SUPABASE_URL = os.getenv('SUPABASE_URL')
+SUPABASE_KEY = os.getenv('SUPABASE_KEY')
+supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-@app.route('/last-fight', methods=['GET'])
+@app.route('/get_last_fight', methods=['POST'])
 def get_last_fight():
-    chat_id = request.args.get('chat_id')
+    data = request.json
+    chat_id = data.get('chat_id')
+
     if not chat_id:
-        return jsonify({"error": "Chat ID is required"}), 400
-    
-    last_fight = LastFightRetriever.get_last_fight(chat_id)
-    
-    if last_fight:
-        return jsonify(last_fight), 200
-    else:
-        return jsonify({"message": "No fight found"}), 404
+        return jsonify({'error': 'chat_id is required'}), 400
+
+    try:
+        # Obtener el último personaje del chat_id dado
+        last_character_response = supabase.table('personajes') \
+            .select('id') \
+            .eq('chat_id', chat_id) \
+            .order('id', desc=True) \
+            .limit(1) \
+            .execute()
+
+        if not last_character_response.data:
+            return jsonify({'message': 'No character found for the given chat_id'}), 404
+
+        last_character_id = last_character_response.data[0]['id']
+
+        # Obtener la última pelea asociada al personaje
+        last_fight_response = supabase.table('fights') \
+            .select('*') \
+            .eq('character_id', last_character_id) \
+            .order('id', desc=True) \
+            .limit(1) \
+            .execute()
+
+        if last_fight_response.data:
+            return jsonify(last_fight_response.data[0]), 200
+        else:
+            return jsonify({'message': 'No fights found for the given character'}), 404
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port)
+    app.run(host='0.0.0.0', port=5000)
