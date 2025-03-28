@@ -8,10 +8,8 @@ const logger = {
     error: (msg) => console.error(msg)
 };
 
-// Set DATABASE_URL directly
 const DATABASE_URL = "postgresql://postgres.mzrojtkzrlnkorthbwtc:WQOLNsCLxomn9uCN@aws-0-eu-central-1.pooler.supabase.com:6543/postgres";
 
-// Set up PostgreSQL connection pool
 const pool = new Pool({
     connectionString: DATABASE_URL
 });
