@@ -16,6 +16,9 @@ const pool = new Pool({
 
 logger.info(`Using database URL: ${DATABASE_URL}`);
 
+// Add JSON body parsing middleware
+app.use(express.json());
+
 // LastFightRetriever equivalent
 class LastFightRetriever {
     static async getLastFight(chatId) {
@@ -69,6 +72,71 @@ class CharacterRetriever {
 // Health check endpoint
 app.get('/', (req, res) => {
     res.json({ status: 'ok', message: 'Server is running' });
+});
+
+// Update fight endpoint
+app.put('/update-fight', async (req, res) => {
+    try {
+        const chatId = req.query.chat_id;
+        const updateData = req.body;
+
+        if (!chatId) {
+            return res.status(400).json({ error: 'Chat ID is required' });
+        }
+
+        if (Object.keys(updateData).length === 0) {
+            return res.status(400).json({ error: 'No update data provided' });
+        }
+
+        // Build SET clause dynamically from request body
+        const setClauses = [];
+        const values = [chatId];
+        let paramCount = 2; // Starting from $2 since $1 is chatId
+
+        for (const [key, value] of Object.entries(updateData)) {
+            setClauses.push(`${key} = $${paramCount}`);
+            values.push(value);
+            paramCount++;
+        }
+
+        const setClause = setClauses.join(', ');
+
+        const query = `
+            WITH last_session AS (
+                SELECT id, active_character_id 
+                FROM sessions 
+                WHERE chat_id = $1
+                ORDER BY updated_at DESC 
+                LIMIT 1
+            ),
+            last_fight AS (
+                SELECT id 
+                FROM fights 
+                WHERE personaje_id = (SELECT active_character_id FROM last_session)
+                ORDER BY id DESC 
+                LIMIT 1
+            )
+            UPDATE fights
+            SET ${setClause}
+            WHERE id = (SELECT id FROM last_fight)
+            RETURNING *;
+        `;
+
+        const result = await pool.query(query, values);
+
+        if (result.rowCount === 0) {
+            return res.status(404).json({ message: 'No fight found to update' });
+        }
+
+        return res.status(200).json({
+            message: 'Fight updated successfully',
+            updatedFight: result.rows[0]
+        });
+
+    } catch (e) {
+        logger.error(`Error in update fight endpoint: ${e.message}`);
+        return res.status(500).json({ error: `Server error: ${e.message}` });
+    }
 });
 
 // Last fight endpoint
