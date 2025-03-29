@@ -277,7 +277,7 @@ app.post('/character', async (req, res) => {
 
         if (characterCount >= 5) {
             return res.status(403).json({
-                error: 'Character limit reached. Maximum 10 characters allowed per chat.'
+                error: 'Character limit reached. Maximum 6 characters allowed per chat.'
             });
         }
 

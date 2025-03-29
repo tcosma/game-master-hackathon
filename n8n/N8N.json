@@ -1,0 +1,3094 @@
+{
+  "name": "My workflow 2",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -3040,
+        1495
+      ],
+      "id": "aad40778-905b-46d1-81fd-79bd25141128",
+      "name": "Telegram Trigger",
+      "webhookId": "ce9fa577-a0b7-4feb-9137-8af26edc665d",
+      "credentials": {
+        "telegramApi": {
+          "id": "cQnuEkXDw2iVEh9Z",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "tableName": "=n8n_chat_histories"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryPostgresChat",
+      "typeVersion": 1.3,
+      "position": [
+        -2672,
+        1715
+      ],
+      "id": "d1caa362-5212-4b51-9e09-2fbcbe2d9c98",
+      "name": "Postgres Chat Memory",
+      "credentials": {
+        "postgres": {
+          "id": "lHtGdq0sojTCEI27",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.message.text }}",
+        "options": {
+          "systemMessage": "=Instrucciones Detalladas:\n\nAnaliza el mensaje: Lee cuidadosamente el contenido del mensaje enviado por el usuario para entender su intención.\nClasifica la solicitud: Asigna la solicitud a una de las siguientes categorías:\nCrear personaje\nDescription: Crear un nuevo personaje.\nContinuar una partida\nDescription: Continuar una partida, esto implica atacar a los enemigos, tirar dados, huir u otras acciones relacionadas con una pelea.\nBorrar personajes o un personaje\nDescription: Borrar uno o todos los personajes creados.\nEmpezar o Crear partida\nDescription: Empezar o crear una nueva partida.\nSeleccionar personaje\nDescription: Seleccionar un personaje específico para usarlo en la partida.\nListar personajes\nDescription: Mostrar una lista de todos los personajes disponibles.\nConsultas no relacionadas con el juego\nDescription: Responder preguntas o solicitudes que no están relacionadas directamente con el juego.\nSaludar al usuario, dar bienvenida, o explicar reglas\nDescription: Saludar al usuario, darle la bienvenida o explicar las reglas del juego.\nProporciona detalles adicionales (cuando sea relevante):\nSi la categoría es Continuar una partida , especifica qué acción específica desea realizar el usuario (atacar, tirar dados, huir, etc.).\nSi la categoría es Seleccionar personaje , indica si el usuario ha mencionado un personaje específico o desea seleccionar uno de su lista.\nSi la categoría es Consultas no relacionadas con el juego , explica brevemente el tema sobre el que pregunta el usuario.\nEjemplo de Salida:\n\nEjemplo 1:\n\nMensaje del usuario: \"Hola, ¿qué puedo hacer aquí?\"\nAnálisis:\nCategoría: Saludar al usuario, dar bienvenida, o explicar reglas\nDetalles adicionales: El usuario está saludando y explorando opciones generales.\nEjemplo 2:\n\nMensaje del usuario: \"Quiero crear un guerrero humano.\"\nAnálisis:\nCategoría: Crear personaje\nDetalles adicionales: El usuario desea crear un personaje con clase \"guerrero\" y raza \"humano\".\nEjemplo 3:\n\nMensaje del usuario: \"Ataca al enemigo con mi espada.\"\nAnálisis:\nCategoría: Continuar una partida\nDetalles adicionales: El usuario quiere realizar una acción de ataque contra el enemigo.\nEjemplo 4:\n\nMensaje del usuario: \"Elimina a mi personaje llamado 'El Guerrero Oscuro'.\"\nAnálisis:\nCategoría: Borrar personajes o un personaje\nDetalles adicionales: El usuario desea eliminar un personaje específico llamado \"El Guerrero Oscuro\".\nEjemplo 5:\n\nMensaje del usuario: \"Inicia una nueva partida.\"\nAnálisis:\nCategoría: Empezar o Crear partida\nDetalles adicionales: El usuario desea comenzar una nueva partida.\nEjemplo 6:\n\nMensaje del usuario: \"Usa a 'El Mago Azul' en esta partida.\"\nAnálisis:\nCategoría: Seleccionar personaje\nDetalles adicionales: El usuario quiere usar el personaje \"El Mago Azul\" en la partida.\nEjemplo 7:\n\nMensaje del usuario: \"Muestra todos mis personajes.\"\nAnálisis:\nCategoría: Listar personajes\nDetalles adicionales: El usuario solicita ver una lista de todos sus personajes creados.\nEjemplo 8:\n\nMensaje del usuario: \"¿Cuál es el clima hoy?\"\nAnálisis:\nCategoría: Consultas no relacionadas con el juego\nDetalles adicionales: El usuario está realizando una consulta no relacionada con el juego.\n\nSi se piden hacer varías acciones a la vez, como crear un personaje y empezar una partida, o seguir peleando y borrar un personaje, lo clasificarás como consultas no relacioanadas con el juego, y dirás que no es posible realizar tal acción",
+          "returnIntermediateSteps": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.8,
+      "position": [
+        -2820,
+        1495
+      ],
+      "id": "f91f38f3-3bbc-4d45-ba7a-2d373b11ad76",
+      "name": "AI Agent",
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "name": "documents",
+        "description": "Este vector store contiene las reglas oficiales del juego de rol Knave, organizadas en diferentes categorías como combate, habilidades, hechizos, creación de personajes, tiradas de salvación, equipo e inventario, reacciones y monstruos. Se debe utilizar para responder cualquier pregunta relacionada con las mecánicas del juego y su sistema de reglas. Las consultas deben formularse como preguntas completas para obtener respuestas precisas.",
+        "topK": "=4"
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolVectorStore",
+      "typeVersion": 1,
+      "position": [
+        -1168,
+        542.5
+      ],
+      "id": "de3e3c34-33f8-4330-ae4b-f65ae081108e",
+      "name": "Answer questions with a vector store"
+    },
+    {
+      "parameters": {
+        "tableName": {
+          "__rl": true,
+          "value": "documents",
+          "mode": "list",
+          "cachedResultName": "documents"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.1,
+      "position": [
+        -1272,
+        742.5
+      ],
+      "id": "9feb3380-14bb-4cf0-af99-05e76f136664",
+      "name": "Supabase Vector Store1",
+      "credentials": {
+        "supabaseApi": {
+          "id": "1TvVD721jKgcGZjI",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.0-flash",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -976,
+        740
+      ],
+      "id": "43202072-435b-4305-abe7-8bea753c0ea7",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "4D1CNrBl8Xr9mePE",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "text-embedding-ada-002",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        -1184,
+        940
+      ],
+      "id": "241e5ca2-c54d-47fa-9392-5fbc0737048a",
+      "name": "Embeddings OpenAI",
+      "credentials": {
+        "openAiApi": {
+          "id": "zuAWSZL3GVHZdsg7",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "inputText": "={{ $('AI Agent').item.json.output }}",
+        "categories": {
+          "categories": [
+            {
+              "category": "Crear personaje",
+              "description": "Crear un nuevo personaje"
+            },
+            {
+              "category": "Continuar una partida, atacando, tirando dados o huyendo entre otras acciones relacionadas a una pelea",
+              "description": "Continuar una partida, esto implica atacar a los enemigos, tirar dados..."
+            },
+            {
+              "category": "Borrar personajes o un personaje ",
+              "description": "Borrar personajes o un personaje "
+            },
+            {
+              "category": "Empezar o Crear partida",
+              "description": "Empezar o Crear partida"
+            },
+            {
+              "category": "Seleccionar personaje",
+              "description": "Seleccionar personaje"
+            },
+            {
+              "category": "Listas personajes",
+              "description": "Listar todos los personajes"
+            },
+            {
+              "category": "Consultas no relacionadas con el juego (reglas, etc..)",
+              "description": "Consultas no relacionadas con el juego "
+            },
+            {
+              "category": "Saludar al usuario, dar bienvenida, o explicar reglas",
+              "description": "Saludar al usuario o dar bienvenida"
+            }
+          ]
+        },
+        "options": {
+          "multiClass": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.textClassifier",
+      "typeVersion": 1,
+      "position": [
+        -1784,
+        1495
+      ],
+      "id": "9c942c27-f055-433e-858d-6a0b5d4d1bf8",
+      "name": "Text Classifier",
+      "alwaysOutputData": false,
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "tableName": "=n8n_chat_histories"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryPostgresChat",
+      "typeVersion": 1.3,
+      "position": [
+        -1020,
+        140
+      ],
+      "id": "a2db23d3-d4e8-49bd-a76a-63068a16c9b0",
+      "name": "Postgres Chat Memory2",
+      "credentials": {
+        "postgres": {
+          "id": "lHtGdq0sojTCEI27",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        -1140,
+        140
+      ],
+      "id": "e44a1bc6-87a6-4311-a129-1b8c15f888bb",
+      "name": "OpenAI Chat Model2",
+      "credentials": {
+        "openAiApi": {
+          "id": "zuAWSZL3GVHZdsg7",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "={{ $json.output }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        200,
+        1770
+      ],
+      "id": "a54aad41-a90b-4686-b4d8-b43ac0c63312",
+      "name": "Telegram1",
+      "webhookId": "5dc7c906-5a9f-4245-98d6-6e8edbbb234f",
+      "executeOnce": true,
+      "credentials": {
+        "telegramApi": {
+          "id": "cQnuEkXDw2iVEh9Z",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "tableName": "=n8n_chat_histories"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryPostgresChat",
+      "typeVersion": 1.3,
+      "position": [
+        -1288,
+        540
+      ],
+      "id": "11a9af35-7c4e-4a9b-adbe-a865f6f6b804",
+      "name": "Postgres Chat Memory3",
+      "credentials": {
+        "postgres": {
+          "id": "lHtGdq0sojTCEI27",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        -1408,
+        540
+      ],
+      "id": "f4028470-ff2b-439a-8702-bc9a89ae3469",
+      "name": "OpenAI Chat Model3",
+      "credentials": {
+        "openAiApi": {
+          "id": "zuAWSZL3GVHZdsg7",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "toolDescription": "=Actualizar pelea",
+        "method": "PUT",
+        "url": "=https://find-last-fight-293368f6551c.herokuapp.com/update-fight?id={{ $('Seleccionar última pelea').item.json.id }}",
+        "sendBody": true,
+        "parametersBody": {
+          "values": [
+            {
+              "name": "initiave_roll",
+              "valueProvider": "modelOptional"
+            },
+            {
+              "name": "player_action",
+              "valueProvider": "modelOptional"
+            },
+            {
+              "name": "player_attack_roll",
+              "valueProvider": "modelOptional"
+            },
+            {
+              "name": "enemy_armor_defense",
+              "valueProvider": "modelOptional"
+            },
+            {
+              "name": "damage_roll",
+              "valueProvider": "modelOptional"
+            },
+            {
+              "name": "damage_dealt",
+              "valueProvider": "modelOptional"
+            },
+            {
+              "name": "enemy_moral_roll",
+              "valueProvider": "modelOptional"
+            },
+            {
+              "name": "enemy_moral_check",
+              "valueProvider": "modelOptional"
+            },
+            {
+              "name": "fight_state",
+              "valueProvider": "modelOptional"
+            }
+          ]
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
+      "typeVersion": 1.1,
+      "position": [
+        -872,
+        540
+      ],
+      "id": "0bb8f282-2b6a-4839-8110-9ef8b96cfcb6",
+      "name": "Actualizar pelea"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.0-flash",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -2792,
+        1715
+      ],
+      "id": "4aef42ac-958b-4c65-989b-e5bb0125abdd",
+      "name": "Google Gemini Chat Model2",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "4D1CNrBl8Xr9mePE",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "tableName": "=n8n_chat_histories"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryPostgresChat",
+      "typeVersion": 1.3,
+      "position": [
+        -1080,
+        1615
+      ],
+      "id": "a05822a8-f739-4372-a211-781bc9bd3a1d",
+      "name": "Postgres Chat Memory4",
+      "credentials": {
+        "postgres": {
+          "id": "lHtGdq0sojTCEI27",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        -1200,
+        1615
+      ],
+      "id": "551abaed-ca0d-4895-b139-91ce231cae73",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "zuAWSZL3GVHZdsg7",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "deleteTable",
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "personajes",
+          "mode": "list",
+          "cachedResultName": "personajes"
+        },
+        "deleteCommand": "delete",
+        "where": {
+          "values": [
+            {
+              "column": "nombre",
+              "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Value', ``, 'string') }}"
+            },
+            {
+              "column": "chat_id",
+              "value": "={{ $('Telegram Trigger').item.json.message.chat.id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgresTool",
+      "typeVersion": 2.6,
+      "position": [
+        -960,
+        1615
+      ],
+      "id": "53177856-2747-4a45-9a9f-7f72ef7b5818",
+      "name": "Borrar un personaje",
+      "credentials": {
+        "postgres": {
+          "id": "lHtGdq0sojTCEI27",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "tableName": "=n8n_chat_histories"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryPostgresChat",
+      "typeVersion": 1.3,
+      "position": [
+        -312,
+        890
+      ],
+      "id": "c3bf2a6a-6ca0-47fc-9f74-4545be439d9e",
+      "name": "Postgres Chat Memory1",
+      "credentials": {
+        "postgres": {
+          "id": "lHtGdq0sojTCEI27",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "toolDescription": "Crear nuevo personaje",
+        "method": "POST",
+        "url": "=https://find-last-fight-293368f6551c.herokuapp.com/character",
+        "sendBody": true,
+        "parametersBody": {
+          "values": [
+            {
+              "name": "nombre"
+            },
+            {
+              "name": "chat_id"
+            }
+          ]
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
+      "typeVersion": 1.1,
+      "position": [
+        -900,
+        140
+      ],
+      "id": "e1309cfb-32e7-478b-b433-3dfa7d9b6d22",
+      "name": "Crear nuevo personaje"
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "tableName": "=n8n_chat_histories"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryPostgresChat",
+      "typeVersion": 1.3,
+      "position": [
+        -1228,
+        2440
+      ],
+      "id": "26ac4235-c4c4-4a84-85f6-4cd50012d45e",
+      "name": "Postgres Chat Memory5",
+      "credentials": {
+        "postgres": {
+          "id": "lHtGdq0sojTCEI27",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        -1348,
+        2440
+      ],
+      "id": "901cbeb6-2438-4b50-8203-8614931585b8",
+      "name": "OpenAI Chat Model4",
+      "credentials": {
+        "openAiApi": {
+          "id": "zuAWSZL3GVHZdsg7",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Seleccionar monstruo aleatorio",
+        "operation": "executeQuery",
+        "query": "SELECT * FROM monstruos ORDER BY RANDOM() LIMIT 1;\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgresTool",
+      "typeVersion": 2.6,
+      "position": [
+        -1108,
+        2440
+      ],
+      "id": "75ca74fa-68d9-47b3-b9a0-8e797d9341a2",
+      "name": "Seleccionar monstruo aleatorio",
+      "credentials": {
+        "postgres": {
+          "id": "lHtGdq0sojTCEI27",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "select",
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "personajes",
+          "mode": "list",
+          "cachedResultName": "personajes"
+        },
+        "limit": 1,
+        "where": {
+          "values": [
+            {
+              "column": "chat_id",
+              "value": "={{ $('Telegram Trigger').item.json.message.chat.id }}"
+            }
+          ]
+        },
+        "sort": {
+          "values": [
+            {
+              "column": "id",
+              "direction": "DESC"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -2444,
+        1495
+      ],
+      "id": "cfcb3f32-0b36-42b5-9f4b-6085aebeb7e0",
+      "name": "Seleccionar último personaje",
+      "alwaysOutputData": true,
+      "credentials": {
+        "postgres": {
+          "id": "lHtGdq0sojTCEI27",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT *\nFROM public.sessions\nWHERE chat_id = {{ $json.chat_id }}\nORDER BY updated_at DESC\nLIMIT 1;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -2224,
+        1495
+      ],
+      "id": "0b25b061-1937-41d1-91b1-05c34fcd6c4f",
+      "name": "Seleccionar sesión",
+      "alwaysOutputData": true,
+      "credentials": {
+        "postgres": {
+          "id": "lHtGdq0sojTCEI27",
+          "name": "Postgres account"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "operation": "select",
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "fights",
+          "mode": "list",
+          "cachedResultName": "fights"
+        },
+        "limit": 1,
+        "where": {
+          "values": [
+            {
+              "column": "id",
+              "value": "={{ $json.last_fight_id }}"
+            }
+          ]
+        },
+        "sort": {
+          "values": [
+            {
+              "column": "id",
+              "direction": "DESC"
+            }
+          ]
+        },
+        "options": {
+          "outputColumns": [
+            "id",
+            "initiative_roll",
+            "player_action",
+            "player_attack_roll",
+            "enemy_armor_defense",
+            "damage_roll",
+            "damage_dealt",
+            "enemy_moral_roll",
+            "enemy_moral_check",
+            "fight_state"
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -2004,
+        1495
+      ],
+      "id": "7014cf7e-10e6-4270-95b7-4853b6e9626a",
+      "name": "Seleccionar última pelea",
+      "alwaysOutputData": true,
+      "credentials": {
+        "postgres": {
+          "id": "lHtGdq0sojTCEI27",
+          "name": "Postgres account"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        -432,
+        890
+      ],
+      "id": "154c6c7b-c365-4449-b8ac-f6833ab03e8c",
+      "name": "OpenAI Chat Model5",
+      "credentials": {
+        "openAiApi": {
+          "id": "zuAWSZL3GVHZdsg7",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $('Telegram Trigger').item.json.message.text }}",
+        "options": {
+          "systemMessage": "=Introducción\n\nEres el gestor de partidas encargado de actualizar el estado de una pelea en curso dentro de una sesión, asegurando que los datos se mantengan consistentes y que el progreso del juego se refleje correctamente. Este proceso debe seguir estrictamente el flujo establecido.\n\nAdemás, implementarás un sistema automático para manejar situaciones críticas:\n\nSi el personaje muere (debido a daño infligido por el monstruo u otra causa), ejecutarás automáticamente un \"tool\" específico que eliminará al usuario del sistema.\nSi cambian atributos clave del personaje (puntos de vida, velocidad de exploración o velocidad de combate), se deberá actualizar dinámicamente la información del personaje para reflejar estos cambios.\nEl objetivo sigue siendo enviar un JSON con los datos actualizados de la pelea en el cuerpo (body) de la solicitud HTTP.\n\nFlujo de Trabajo Obligatorio\nConsulta de Reglas - PASO OBLIGATORIO INICIAL\nAntes de realizar cualquier acción o cálculo para actualizar la pelea:\nDEBES consultar el nodo de reglas del juego para determinar qué acciones están permitidas en este momento.\nEsta consulta de reglas es OBLIGATORIA y debe ser el PRIMER PASO antes de cualquier actualización.\nLas reglas determinan las posibles acciones, modificadores y consecuencias basadas en el estado actual de la pelea.\nSin esta consulta previa, no puedes proceder con ninguna actualización.\nVerificación del Estado Actual\nEl estado actual de la partida es este:\njson\n{\n  \"id\": {{ $('Seleccionar última pelea').item.json.id }},\n  \"initiative_roll\": {{ $('Seleccionar última pelea').item.json.initiative_roll }},\n  \"player_action\": {{ $('Seleccionar última pelea').item.json.player_action }},\n  \"player_attack_roll\": {{ $('Seleccionar última pelea').item.json.player_attack_roll }},\n  \"enemy_armor_defense\": {{ $('Seleccionar última pelea').item.json.enemy_armor_defense }},\n  \"damage_roll\": {{ $('Seleccionar última pelea').item.json.damage_roll }},\n  \"damage_dealt\": {{ $('Seleccionar última pelea').item.json.damage_dealt }},\n  \"enemy_moral_roll\": {{ $('Seleccionar última pelea').item.json.enemy_moral_roll }},\n  \"enemy_moral_check\": {{ $('Seleccionar última pelea').item.json.enemy_moral_check }},\n  \"fight_state\": {{ $('Seleccionar última pelea').item.json.fight_state }}\n}\nAplicar Reglas y Factor de Aleatoriedad\nBasándote en la consulta de reglas inicial, determina las acciones permitidas.\nIntroduce el factor de aleatoriedad según las reglas consultadas.\nGarantiza que solo se realicen acciones válidas conforme a las reglas establecidas.\nActualizar Datos y Progreso de la Pelea\nModifica únicamente aquellos datos que hayan cambiado durante el transcurso de la pelea.\nPrepara un JSON con los datos actualizados.\nEnvía el JSON en el cuerpo (body) de la solicitud HTTP al nodo correspondiente.\nAsegúrate de mantener la consistencia del sistema durante cada actualización.\nManejo de Escenarios Críticos\nSi el personaje muere (estado \"DEAD\" ) debido al daño recibido, ejecuta automáticamente el tool de borrar personaje para borrar al personaje\nEsto eliminará al usuario del sistema.\nSi cambian atributos clave del personaje (puntos de vida, velocidad de exploración o velocidad de combate), actualiza inmediatamente la información del personaje utilizando el siguiente comando ejecutar el tool de actualizar personaje\nFormato del JSON a Enviar\nEl JSON debe contener solo los datos que hayan cambiado. Si no se especifican valores de dados por el usuario, debes generarlos aleatoriamente según las reglas consultadas. La estructura es la siguiente:\n\njson\n{\n  \"initiative_roll\": <número entero>,\n  \"player_action\": \"<cadena de texto>\",\n  \"player_attack_roll\": <número entero>,\n  \"enemy_armor_defense\": <número entero>,\n  \"damage_roll\": <número entero>,\n  \"damage_dealt\": <número entero>,\n  \"enemy_moral_roll\": <número entero>,\n  \"enemy_moral_check\": <número entero>,\n  \"fight_state\": \"<cadena de texto>\"\n}\nDescripción de los Campos\ninitiative_roll : Resultado del lanzamiento de dados para determinar la iniciativa.\nplayer_action : Descripción de la acción realizada por el jugador (ej.: \"ataque\", \"defensa\").\nplayer_attack_roll : Resultado del lanzamiento de dados para el ataque del jugador.\nenemy_armor_defense : Valor de defensa del enemigo.\ndamage_roll : Daño causado por el ataque antes de aplicar la defensa.\ndamage_dealt : Daño neto aplicado tras considerar la defensa.\nenemy_moral_roll : Lanzamiento de dados para verificar la moral del enemigo.\nenemy_moral_check : Resultado del chequeo de moral del enemigo.\nfight_state : Estado actual de la pelea. Puede ser uno de los siguientes:\nIN PROGRESS: La pelea aún está en curso.\nLOST: El jugador ha perdido la pelea.\nWINNED: El jugador ha ganado la pelea.\nDEAD: El jugador ha muerto.\n\nConsideraciones Importantes\nSecuencia Obligatoria de Ejecución\nSIEMPRE empieza consultando las reglas - Este paso es obligatorio e inmutable.\nVerifica el estado actual.\nAplica las reglas consultadas.\nActualiza los datos según corresponda.\nManeja escenarios críticos (muerte del personaje o cambios en atributos).\nGeneración de Valores Aleatorios que tengan sentido en el contexto del juego\nSi no se proporcionan valores específicos para los lanzamientos de dados, simplemente pregunta al usuario si desea tirar los dados o hacerlo tú automaticamente, debes generarlos aleatoriamente dentro de los rangos permitidos por las reglas consultadas.\n\nAsegúrate de que los valores aleatorios generados sean coherentes con las mecánicas del juego y las reglas.\nActualización Selectiva de Datos\nSolo debes enviar los campos que hayan cambiado respecto al estado anterior. No incluyas información redundante.\nConsistencia del Sistema\nSigue estrictamente el flujo establecido para garantizar que el sistema se mantenga coherente y actualizado.\nVerifica que los valores actualizados mantengan la lógica del juego y las relaciones entre los diferentes elementos según las reglas consultadas.\nManejo de Excepciones\nContempla posibles errores durante el proceso de actualización y define estrategias para manejarlos.\nProporciona mensajes claros en caso de que ocurran problemas durante la actualización.\nValidación de Datos\nAntes de enviar el JSON, valida que todos los campos contengan valores válidos según sus tipos y rangos esperados en las reglas.\nAsegúrate de que las cadenas de texto no contengan caracteres especiales que puedan causar problemas.\nSi el jugador muere, indícalo bien en la salida, junto al motivo.",
+          "returnIntermediateSteps": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.8,
+      "position": [
+        -1064,
+        320
+      ],
+      "id": "2870949a-5cac-43c7-a78a-8674684aedd3",
+      "name": "Actualizador de partidas",
+      "executeOnce": true,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $('Telegram Trigger').item.json.message.text }}",
+        "options": {
+          "systemMessage": "=Instrucción Principal:\nGenera un nuevo personaje siguiendo las especificaciones proporcionadas. No realices ninguna otra tarea del workflow.\n\nTarea:\nCrear un personaje con el nombre proporcionado y vinculado al chatId dado. Solo genera al personaje y asegúrate de cumplir con el formato de salida esperado. Los parámetros iniciales por defecto son:\nPuntos de vida: 10\n\nVelocidad de exploración: 120\nVelocidad de combate: 40\n\nEntrada:\njson\n{\n  \"nombre\": \"<nombre_del_personaje>\",\n  \"chatId\": {{ $('Telegram Trigger').item.json.message.chat.id }}\n}\nRegistro en BD:\nInsertar el nuevo personaje en la base de datos.\n\nRespuesta esperada (JSON):\njson\n{\n  \"nombre\": \"<nombre_del_personaje>\",\n\"puntosDeVida\": 10,\n  \"velocidadExploracion\": 120,\n  \"velocidadCombate\": 40\n}\nRespuesta detallada:\nIndica que se ha creado el nuevo personaje con éxito, menciona el nombre y confirma que ha sido insertado en la base de datos.\n\nEn caso de que el usuario quiera crear un personaje y no te haya dado detalles, le preguntarás unicamente por el nombre que le deseas poner al usuario, pues los demás detalles son irrelevantes. Además, un usuario no podrá tener más de de 5 personajes.",
+          "returnIntermediateSteps": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.8,
+      "position": [
+        -1108,
+        -80
+      ],
+      "id": "85ee5441-c7d0-47dd-a338-38b480e9e787",
+      "name": "Creación de personajes",
+      "executeOnce": true,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "name": "documents",
+        "description": "Este vector store contiene las reglas oficiales del juego de rol Knave, organizadas en diferentes categorías como combate, habilidades, hechizos, creación de personajes, tiradas de salvación, equipo e inventario, reacciones y monstruos. Se debe utilizar para responder cualquier pregunta relacionada con las mecánicas del juego y su sistema de reglas. Las consultas deben formularse como preguntas completas para obtener respuestas precisas.",
+        "topK": "=4"
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolVectorStore",
+      "typeVersion": 1,
+      "position": [
+        -988,
+        2442.5
+      ],
+      "id": "a85261de-3469-4e88-a736-0ce4e58e480e",
+      "name": "Answer questions with a vector store1"
+    },
+    {
+      "parameters": {
+        "tableName": {
+          "__rl": true,
+          "value": "documents",
+          "mode": "list",
+          "cachedResultName": "documents"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.1,
+      "position": [
+        -1092,
+        2642.5
+      ],
+      "id": "f80ea45c-472c-4713-90cf-25eecc1303e0",
+      "name": "Supabase Vector Store",
+      "credentials": {
+        "supabaseApi": {
+          "id": "1TvVD721jKgcGZjI",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.0-flash",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -796,
+        2640
+      ],
+      "id": "7f87c73e-0e8a-433a-b637-dae3d45293ac",
+      "name": "Google Gemini Chat Model1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "4D1CNrBl8Xr9mePE",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "text-embedding-ada-002",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        -1004,
+        2840
+      ],
+      "id": "5e04d3f8-ce6d-483e-85aa-8a34ac6988f4",
+      "name": "Embeddings OpenAI1",
+      "credentials": {
+        "openAiApi": {
+          "id": "zuAWSZL3GVHZdsg7",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $('Telegram Trigger').item.json.message.text }}",
+        "options": {
+          "systemMessage": "=Eres el Game Master (GM) en una partida de rol del juego Knave. Tu misión es dirigir la aventura de manera inmersiva, dinámica y siguiendo estrictamente las reglas oficiales del juego. Tienes acceso a tres workflows posibles relacionados con la gestión de personajes, tomarás una decisión de que workflow ejecutar en cada caso:\n\nMostrar Todos los Personajes: Este workflow se utiliza para recuperar y mostrar la lista completa de personajes actualmente registrados en la base de datos. Devuelve un array con todos los personajes existentes CON SU NOMBRE ID y su HP (PUNTOS DE VIDA) \n\nBorrar Todos los Personajes: Este workflow se utiliza para eliminar todos los personajes de la base de datos de manera irreversible. Se emplea cuando deseas reiniciar completamente la lista de personajes.\n\nBorrar un Personaje en Concreto: Este workflow se utiliza para eliminar un único personaje identificado por su nombre. Permite al GM eliminar de manera selectiva un personaje sin afectar a los demás. ",
+          "returnIntermediateSteps": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.8,
+      "position": [
+        -1108,
+        1395
+      ],
+      "id": "12f8f98c-1152-455e-a7dd-f7a8914e64ee",
+      "name": "Eliminar personajes",
+      "executeOnce": true,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "name": "documents",
+        "description": "Este vector store contiene las reglas oficiales del juego de rol Knave, organizadas en diferentes categorías como combate, habilidades, hechizos, creación de personajes, tiradas de salvación, equipo e inventario, reacciones y monstruos. Se debe utilizar para responder cualquier pregunta relacionada con las mecánicas del juego y su sistema de reglas. Las consultas deben formularse como preguntas completas para obtener respuestas precisas.",
+        "topK": "=4"
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolVectorStore",
+      "typeVersion": 1,
+      "position": [
+        -192,
+        892.5
+      ],
+      "id": "35c32b49-a190-41e4-9e3a-c7781ae19f03",
+      "name": "Answer questions with a vector store2"
+    },
+    {
+      "parameters": {
+        "tableName": {
+          "__rl": true,
+          "value": "documents",
+          "mode": "list",
+          "cachedResultName": "documents"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.1,
+      "position": [
+        -296,
+        1092.5
+      ],
+      "id": "7b0e1914-c5d0-4e1b-a3c4-5b28a9066caa",
+      "name": "Supabase Vector Store2",
+      "credentials": {
+        "supabaseApi": {
+          "id": "1TvVD721jKgcGZjI",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.0-flash",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        0,
+        1090
+      ],
+      "id": "e0b39d25-7205-487a-9b11-2a562a1fa09b",
+      "name": "Google Gemini Chat Model3",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "4D1CNrBl8Xr9mePE",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "text-embedding-ada-002",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        -208,
+        1290
+      ],
+      "id": "f1c82f97-86e6-4b11-9c78-528698778397",
+      "name": "Embeddings OpenAI2",
+      "credentials": {
+        "openAiApi": {
+          "id": "zuAWSZL3GVHZdsg7",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "deleteTable",
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "personajes",
+          "mode": "list",
+          "cachedResultName": "personajes"
+        },
+        "deleteCommand": "delete",
+        "where": {
+          "values": [
+            {
+              "column": "nombre",
+              "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Value', ``, 'string') }}"
+            },
+            {
+              "column": "chat_id",
+              "value": "={{ $('Telegram Trigger').item.json.message.chat.id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgresTool",
+      "typeVersion": 2.6,
+      "position": [
+        -752,
+        540
+      ],
+      "id": "636dd304-9bed-4290-aab6-037c12b1cb54",
+      "name": "Borrar un personaje1",
+      "credentials": {
+        "postgres": {
+          "id": "lHtGdq0sojTCEI27",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "personajes",
+          "mode": "list",
+          "cachedResultName": "personajes"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id": "={{ $('Seleccionar último personaje').item.json.id }}",
+            "updated_at": "={{$now}}",
+            "puntos_de_vida": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('puntos_de_vida', ``, 'number') }}",
+            "velocidad_exploracion": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('velocidad_exploracion', ``, 'number') }}",
+            "velocidad_combate": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('velocidad_combate', ``, 'number') }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "nombre",
+              "displayName": "nombre",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "puntos_de_vida",
+              "displayName": "puntos_de_vida",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "velocidad_exploracion",
+              "displayName": "velocidad_exploracion",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "velocidad_combate",
+              "displayName": "velocidad_combate",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "chat_id",
+              "displayName": "chat_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "created_at",
+              "displayName": "created_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "updated_at",
+              "displayName": "updated_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgresTool",
+      "typeVersion": 2.6,
+      "position": [
+        -632,
+        540
+      ],
+      "id": "dc03b7fb-2c31-4f28-b393-c245c3bcee43",
+      "name": "Actualizar datos de un personaje",
+      "credentials": {
+        "postgres": {
+          "id": "lHtGdq0sojTCEI27",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "tableName": "=n8n_chat_histories"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryPostgresChat",
+      "typeVersion": 1.3,
+      "position": [
+        -1080,
+        2040
+      ],
+      "id": "63c010ff-825e-4e3d-8a65-b6ad18799176",
+      "name": "Postgres Chat Memory8",
+      "credentials": {
+        "postgres": {
+          "id": "lHtGdq0sojTCEI27",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        -1200,
+        2040
+      ],
+      "id": "98e8ea5a-b11f-4659-9853-6e24b22f081c",
+      "name": "OpenAI Chat Model8",
+      "credentials": {
+        "openAiApi": {
+          "id": "zuAWSZL3GVHZdsg7",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $('Telegram Trigger').item.json.message.text }}",
+        "options": {
+          "systemMessage": "=[Tarea]:\nEres un asistente especializado en gestionar sesiones de personajes dentro de un sistema. Tu objetivo es recibir un nombre de personaje proporcionado por el usuario, validar su existencia utilizando un tool específico para seleccionar todos los personajes disponibles, y luego actualizar la sesión activa del personaje seleccionado cambiando su campo updated_at a la fecha y hora actual.\n\n[Entrada esperada]:\nEl usuario proporcionará el nombre de un personaje específico . Asegúrate de validar que el nombre dado corresponde a un personaje existente en el sistema antes de continuar con los siguientes pasos.\n\n[Salida esperada]:\nEjecuta obligatoriamente el tool \"Seleccionar todos los personajes\" para obtener la lista completa de personajes disponibles.\nConfirma si se encontró el personaje con el nombre proporcionado.\nSi el personaje existe:\nEjecuta el nodo correspondiente para seleccionar el personaje.\nLuego, ejecuta el nodo \"Actualizar sesión\" para cambiar el campo updated_at de la sesión correspondiente al personaje seleccionado.\nProporciona una respuesta clara al usuario indicando si la operación fue exitosa o si ocurrió algún error.\n[Instrucciones detalladas]:\n1. Ejecución obligatoria del tool \"Seleccionar todos los personajes\":\nComo primer paso, siempre debes ejecutar el tool \"Seleccionar todos los personajes\". Este tool te proporcionará una lista completa de todos los personajes disponibles en el sistema, incluyendo sus nombres e IDs.\nEsta lista será utilizada para validar si el personaje proporcionado por el usuario existe en el sistema.\n2. Validación del nombre del personaje:\nUna vez obtenida la lista de personajes mediante el tool mencionado, verifica si el nombre proporcionado por el usuario coincide con alguno de los nombres de personajes en la lista.\nSi no se encuentra el personaje:\nInforma al usuario con un mensaje claro: \"Error: El personaje [nombre] no existe.\"\nTermina el proceso.\n3. Selección del personaje:\nSi el personaje existe, obtén su ID correspondiente desde la lista generada por el tool \"Seleccionar todos los personajes\".\nUsa este ID para seleccionar el personaje correctamente.\n4. Actualización de la sesión:\nDespués de seleccionar el personaje, identifica la sesión activa asociada al personaje.\nEjecuta el tool \"Actualizar sesión\" para cambiar el campo updated_at de la sesión activa con la fecha y hora actuales.\n5. Respuesta final:\nSi todo fue exitoso, notifica al usuario con un mensaje como:\n\"Personaje seleccionado: [nombre]. Sesión actualizada exitosamente.\"\nEn caso de errores durante cualquiera de los pasos, informa al usuario con detalles claros sobre qué salió mal. Por ejemplo:\n\"Error: No se pudo encontrar la sesión activa para el personaje [nombre].\"\n\"Error: Ocurrió un problema al actualizar la sesión del personaje [nombre].\"\n[Formato de salida]:\nSi éxito:\n\"Personaje seleccionado: [nombre]. Sesión actualizada exitosamente.\"\nSi fallo en validación:\n\"Error: El personaje [nombre] no existe.\"\nSi fallo en otro paso:\n\"Error: [detalles del problema].\"\n[Ejemplo de entrada/salida]:\nEntrada:\n\"Selecciona el personaje llamado 'Gandalf'.\"\n\nSalida:\nEjecuta el tool \"Seleccionar todos los personajes\" y obtiene la lista:\n[{\"id\": 1, \"nombre\": \"Gandalf\"}, {\"id\": 2, \"nombre\": \"Aragorn\"}, ...]\nVerifica si \"Gandalf\" existe en la lista. Si existe:\nEjecuta el tool \"Actualizar sesión\" para el personaje con ID 1.\nNotifica al usuario:\n\"Personaje seleccionado: Gandalf. Sesión actualizada exitosamente.\"\nSi \"Gandalf\" no existe en la lista:\n\"Error: El personaje Gandalf no existe.\"\nSi ocurre un error durante la actualización de la sesión:\n\"Error: No se pudo actualizar la sesión del personaje Gandalf debido a [razón específica].\"",
+          "returnIntermediateSteps": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.8,
+      "position": [
+        -1108,
+        1820
+      ],
+      "id": "4485a56a-34c5-4fae-a6d5-625d470cf94b",
+      "name": "Seleccion personaje",
+      "executeOnce": true,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Crear o actualizar sesiones",
+        "operation": "upsert",
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "sessions",
+          "mode": "list",
+          "cachedResultName": "sessions"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "chat_id": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+            "active_character_id": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('active_character_id', ``, 'number') }}",
+            "updated_at": "={{ $now }}"
+          },
+          "matchingColumns": [
+            "active_character_id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "chat_id",
+              "displayName": "chat_id",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "active_character_id",
+              "displayName": "active_character_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "last_fight_id",
+              "displayName": "last_fight_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": false,
+              "removed": true
+            },
+            {
+              "id": "created_at",
+              "displayName": "created_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false,
+              "removed": true
+            },
+            {
+              "id": "updated_at",
+              "displayName": "updated_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgresTool",
+      "typeVersion": 2.6,
+      "position": [
+        -960,
+        2040
+      ],
+      "id": "e2362f5e-ce55-4917-88a6-a9b43adfd339",
+      "name": "Actualizar sesion",
+      "credentials": {
+        "postgres": {
+          "id": "lHtGdq0sojTCEI27",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "toolDescription": "=Seleccionar personajes de un usuario",
+        "url": "=https://find-last-fight-293368f6551c.herokuapp.com/characters?chat_id={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "optimizeResponse": true,
+        "fieldsToInclude": "selected",
+        "fields": "id, nombre, puntos_de_vida"
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
+      "typeVersion": 1.1,
+      "position": [
+        -96,
+        1990
+      ],
+      "id": "0570f6d5-8453-495e-85c7-4b077ae1f4ae",
+      "name": "Seleccionar personajes de usuario2"
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "tableName": "=n8n_chat_histories"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryPostgresChat",
+      "typeVersion": 1.3,
+      "position": [
+        -216,
+        1990
+      ],
+      "id": "cc7309ce-42d2-473c-84b2-1a020a4f7dd3",
+      "name": "Postgres Chat Memory9",
+      "credentials": {
+        "postgres": {
+          "id": "lHtGdq0sojTCEI27",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        -336,
+        1990
+      ],
+      "id": "f157b55f-c08d-423b-b422-766857c3c601",
+      "name": "OpenAI Chat Model9",
+      "credentials": {
+        "openAiApi": {
+          "id": "zuAWSZL3GVHZdsg7",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $('Telegram Trigger').item.json.message.text }}",
+        "options": {
+          "systemMessage": "=Eres el Game Master (GM) en una partida de rol del juego Knave. Tu misión ahora es usar tu poderoso tool mágico para seleccionar y listar todos los personajes registrados en la base de datos. Muestra su nombre , ID y sus Puntos de Vida (HP) de forma épica, como si estuvieras revelando un grupo de héroes legendarios.\n\nUna vez que hayas mostrado la lista, interactúa con el usuario de manera dinámica y divertida. Por ejemplo, podrías decir algo como:\n\"¡Y así son tus héroes, cada uno más valiente que el otro! ¿Qué deseas hacer ahora, noble aventurero? ¿Quieres elegir a uno para una gran misión, actualizar sus stats o tal vez crear a un nuevo campeón para unirse a esta épica travesía?\"\n\nNo olvides mantener ese tono lleno de energía y humor mientras guías al usuario hacia su próxima acción. ¡Después de todo, tú eres el maestro de esta grandiosa aventura!\n\nAdemás, asegúrate de ejecutar el tool correcto para seleccionar personajes.",
+          "returnIntermediateSteps": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.8,
+      "position": [
+        -304,
+        1770
+      ],
+      "id": "a0fb27bb-57fd-4bb0-af76-d0dd72592a7b",
+      "name": "Listar personajes",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "toolDescription": "=Seleccionar personajes de un usuario",
+        "url": "=https://find-last-fight-293368f6551c.herokuapp.com/characters?chat_id={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "optimizeResponse": true,
+        "fieldsToInclude": "selected",
+        "fields": "id, nombre, puntos_de_vida"
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
+      "typeVersion": 1.1,
+      "position": [
+        -840,
+        2040
+      ],
+      "id": "b6dca1d4-cecc-428c-853a-06a5c822cf6b",
+      "name": "Seleccionar personajes de usuario3"
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "tableName": "=n8n_chat_histories"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryPostgresChat",
+      "typeVersion": 1.3,
+      "position": [
+        -1116,
+        3540
+      ],
+      "id": "e0ddfaa1-568b-4d25-b589-392294ff9c7b",
+      "name": "Postgres Chat Memory10",
+      "credentials": {
+        "postgres": {
+          "id": "lHtGdq0sojTCEI27",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        -1236,
+        3540
+      ],
+      "id": "068c08fe-60ff-4f50-9e88-e6e3d391b424",
+      "name": "OpenAI Chat Model10",
+      "credentials": {
+        "openAiApi": {
+          "id": "zuAWSZL3GVHZdsg7",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $('Telegram Trigger').item.json.message.text }}",
+        "options": {
+          "systemMessage": "=Eres el Game Master (GM) de un juego interactivo llamado Knave . Tu objetivo es proporcionar una experiencia inmersiva e interesante al jugador desde el primer momento. Tienes acceso a un sistema de respuesta a preguntas (question answering tool) que contiene las reglas y mecánicas principales del juego. Debes usar esta herramienta para responder cualquier pregunta relacionada con las reglas, objetivos o contexto del juego.\n\nInstrucciones para el GM:\nSaluda o da la bienvenida al jugador : Comienza con un saludo personalizado y establece el ambiente del juego.\nProporciona información básica : Ofrece una breve introducción sobre el juego y su objetivo (esto lo puedes consultar ejecutando el tool de reglas para saber las reglas del juego)\nOfrece ayuda cuando sea necesario : Si el jugador tiene dudas sobre las reglas o cómo proceder, utiliza tu herramienta de question answering para responder (la misma que antes)\nMantén el tono coherente : Adecúa el lenguaje al género del juego (fantasía, ciencia ficción, etc.).\nHerramienta de Question Answering:\nTienes acceso a un repositorio de conocimiento con las siguientes categorías:\n\nReglas básicas : Cómo se juega, qué acciones pueden realizar los jugadores, y qué pasa si fallan.\nObjetivos del juego : Qué necesita hacer el jugador para ganar o avanzar.\nContexto del mundo : Información sobre el universo donde se desarrolla el juego (geografía, historia, personajes clave).\nPreguntas frecuentes : Respuestas a preguntas comunes que otros jugadores han hecho.\nEjemplos de Consultas y Respuestas:\nPregunta: \"¿Cuál es el objetivo del juego?\"\nRespuesta: Recolecta 10 artefactos mágicos para derrotar al villano final.\nPregunta: \"¿Qué pasa si pierdo una vida?\"\nRespuesta: Al perder una vida, retrocedes 2 niveles.\nPregunta: \"¿Quién es el villano principal?\"\nRespuesta: El villano principal es Malakar, un hechicero oscuro que busca dominar el mundo.\nEjemplo de Diálogo Inicial:\n¡Bienvenido, viajero! Has llegado a Knave , un lugar lleno de misterios y aventuras. ¿Qué deseas hacer? Crear un personaje, empezar o continuar una partida...",
+          "returnIntermediateSteps": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.8,
+      "position": [
+        -1204,
+        3320
+      ],
+      "id": "607203e2-4f88-4a70-9997-82a7fb53da34",
+      "name": "Saludar al usuario",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=MENSAJE DEL USUARIO: {{ $('Telegram Trigger').item.json.message.text }}",
+        "options": {
+          "systemMessage": "=Eres el Game Master del juego Knive. Tu única función es procesar y mejorar la legibilidad de las respuestas generadas por los nodos previos (creación de partidas, selección de personajes, eliminación de personajes, continuación de partidas y creación de personajes). Debes asegurarte de que las respuestas sean claras, visualmente atractivas y fáciles de leer para el usuario final en Telegram.\n\nInstrucciones clave:\nNo utilices símbolos como # o - en las respuestas . Mantén el texto lo más natural posible.\nSi el mensaje es largo o denso, simplifícalo y organízalo de manera clara, utilizando saltos de línea y emojis para hacerlo visualmente atractivo.\nSi el mensaje proviene del nodo \"actualizador de partidas\", ejecuta automáticamente el tool de reglas (rules) y sugiere posibles acciones basadas en las decisiones previas del jugador.\nSiempre incluye algunos emojis relevantes para darle vida al texto, pero sin pasarte.\nSi el usuario no está en una pelea o no sabe qué hacer, ofrécele opciones claras: seleccionar un nuevo personaje, comenzar una pelea, eliminar un personaje o cambiar de personaje.\nTen en cuenta el contexto del nodo del que proviene el mensaje:\nCreación de personajes : Indica que ya se ha creado un personaje y sugiere empezar con una partida.\nCreación de partidas : Explica lo que ha pasado en la pelea\nSelector de personajes : Actualiza la sesión y confirma el cambio de personaje.\nEliminación de personajes : Confirma la eliminación y sugiere crear uno nuevo o jugar con otro existente.\nContinuación de partidas : Usa el tool de reglas y sugiere posibles acciones.\nEjemplo de salida esperada:\nSi el mensaje del nodo anterior es complejo o denso, reformátalo de esta manera:\n¡Aquí tienes lo que sucede ahora! 🎮\n\n[Título claro y conciso]\n- [Punto 1 simplificado]\n- [Punto 2 simplificado]\n\n¿Qué decides hacer ahora? ⚙️\n1. Opción A 🚀\n2. Opción B 🔥\n3. Cambiar de personaje 👤\n4. Ver reglas del juego 📜\nRecuerda siempre priorizar la claridad y la usabilidad para el usuario final. ¡Haz que cada respuesta sea una experiencia envolvente y divertida! 😊\n\nMENSAJE DEL AGENTE:{{ $json.output }}\n",
+          "returnIntermediateSteps": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.8,
+      "position": [
+        -400,
+        670
+      ],
+      "id": "1822362b-85e5-4ac5-8608-438d49cf6dcf",
+      "name": "Agente final",
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "name": "documents",
+        "description": "Este vector store contiene las reglas oficiales del juego de rol Knave, organizadas en diferentes categorías como combate, habilidades, hechizos, creación de personajes, tiradas de salvación, equipo e inventario, reacciones y monstruos. Se debe utilizar para responder cualquier pregunta relacionada con las mecánicas del juego y su sistema de reglas. Las consultas deben formularse como preguntas completas para obtener respuestas precisas.",
+        "topK": "=4"
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolVectorStore",
+      "typeVersion": 1,
+      "position": [
+        -996,
+        3542.5
+      ],
+      "id": "29da5123-ada7-40cf-b396-3bad984e3d52",
+      "name": "Answer questions with a vector store3"
+    },
+    {
+      "parameters": {
+        "tableName": {
+          "__rl": true,
+          "value": "documents",
+          "mode": "list",
+          "cachedResultName": "documents"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.1,
+      "position": [
+        -1100,
+        3742.5
+      ],
+      "id": "fc3299d2-59f7-4145-9f79-8f8904cc1d86",
+      "name": "Supabase Vector Store3",
+      "credentials": {
+        "supabaseApi": {
+          "id": "1TvVD721jKgcGZjI",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.0-flash",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -804,
+        3740
+      ],
+      "id": "fdd24008-6934-4454-ad1f-d991dba04f05",
+      "name": "Google Gemini Chat Model5",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "4D1CNrBl8Xr9mePE",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "text-embedding-ada-002",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        -1012,
+        3940
+      ],
+      "id": "c24d3a79-c517-4bac-abf6-d64a633d5829",
+      "name": "Embeddings OpenAI3",
+      "credentials": {
+        "openAiApi": {
+          "id": "zuAWSZL3GVHZdsg7",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        -1696,
+        1715
+      ],
+      "id": "087d0a54-0423-41eb-a314-636b3db4a5a2",
+      "name": "OpenAI Chat Model11",
+      "credentials": {
+        "openAiApi": {
+          "id": "zuAWSZL3GVHZdsg7",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "toolDescription": "Crear partida",
+        "method": "POST",
+        "url": "https://find-last-fight-293368f6551c.herokuapp.com/create-fight",
+        "sendBody": true,
+        "parametersBody": {
+          "values": [
+            {
+              "name": "chat_id"
+            },
+            {
+              "name": "personaje_id"
+            },
+            {
+              "name": "monstruo_id"
+            },
+            {
+              "name": "enemy_armor_defense",
+              "valueProvider": "modelOptional"
+            },
+            {
+              "name": "enemy_moral_roll",
+              "valueProvider": "modelOptional"
+            },
+            {
+              "name": "enemy_moral_check",
+              "valueProvider": "modelOptional"
+            }
+          ]
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
+      "typeVersion": 1.1,
+      "position": [
+        -692,
+        2440
+      ],
+      "id": "3d7f4486-be3a-4acf-b514-40ee7276c25c",
+      "name": "Crear partida"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $('Telegram Trigger').item.json.message.text }}",
+        "options": {
+          "systemMessage": "=El proceso de generación de una partida dinámica y envolvente requiere un enfoque sistemático que garantice coherencia, inmersión y equilibrio narrativo. Para ello, es fundamental utilizar el tool obligatorio \"Crear Partida\", ya que este asegura que todos los datos necesarios sean procesados correctamente y en el orden adecuado. Este workflow no solo integra herramientas clave, sino que también mantiene la integridad de la base de datos y proporciona respuestas detalladas que enriquecen la experiencia del usuario.\n\nNOTA IMPORTANTE: El sistema NO responderá preguntas intermedias durante la ejecución del workflow. Todas las consultas o cuestionamientos deben realizarse AL FINAL del proceso, una vez que se haya completado exitosamente el tool obligatorio \"Crear Partida\". Cualquier pregunta formulada antes de este punto será ignorada para mantener la integridad del flujo.\n\nDescripción del Workflow Obligatorio:\nPaso 0: Selección Aleatoria de Enemigo\nAcción: Consulta a la base de datos para seleccionar un enemigo aleatorio basado en la dificultad o contexto narrativo.\nRegistro en BD: No modifica la base de datos; solo consulta información.\nRespuesta Detallada Requerida:\nIdentificación completa del enemigo (nombre, habilidades, debilidades).\nContexto narrativo inicial sobre el enemigo (historia breve o descripción visual).\nEjemplo de Salida:\n\nUn esqueleto armado con una espada oxidada emerge de las sombras. Su armadura está cubierta de musgo, pero sus movimientos son sorprendentemente ágiles. Este es un enemigo nivel bajo, ideal para principiantes.\nPaso 1: Consulta de Reglas Dinámicas\nAcción: Obtener reglas específicas relacionadas con la mecánica de combate, resolución de acciones y comprobaciones clave.\nExclusión de Reglas Inútiles: Se omiten reglas irrelevantes para el contexto actual, como compra de monedas o intercambio de objetos sin relevancia.\nRegistro en BD: No realiza cambios en la base de datos; solo consulta información.\nRespuesta Detallada Requerida:\nLista clara de acciones permitidas (atacar, defender, usar habilidades especiales).\nMecánica de dados (ej.: tirar d20 + bonificador para ataque, d8 para daño físico).\nModificadores contextuales (ventaja/disventaja según terreno o estado del personaje).\nComprobaciones de moral o huida del enemigo.\nEjemplo de Salida:\n\n3\nAcciones Permitidas: Atacar, Defender, Usar Habilidad Especial (\"Grito de Guerra\").\nMecánica de Combate: Lanza un dado de 20 (+3 por destreza) para atacar. Si superas la defensa del enemigo (12), rueda un dado de 8 para determinar el daño infligido.\nComprobaciones de Moral: Si el enemigo recibe más de 5 puntos de daño en un turno, realizará una tirada de moral (d20 + 2). Un resultado menor a 10 lo hará huir.\nPaso 2: Ejecución del Tool Obligatorio \"Crear Partida\"\nAcción: Utiliza el tool obligatorio \"Crear Partida\" para generar la partida dinámica. Este paso es crítico porque centraliza todos los datos relevantes en un formato estructurado, facilitando su manejo y evitando errores manuales.\nDatos Requeridos para el Tool (todos son números y debes rellenarlos aunque sea con valores que sean corrector):\njson\n{\n    \"chat_id\": {{ $('Telegram Trigger').item.json.message.chat.id }},\n    \"personaje_id\": {{ $('Seleccionar último personaje').item.json.id }},\n    \"enemigo_id\": \"<placeholder_enemigo_id>\",\n    \"enemy_moral_roll\": <placeholder_enemy_moral_roll>,\n    \"enemy_moral_check\": <placeholder_enemy_moral_check>\n}\nImportancia del Tool:\nAsegura que todos los datos sean enviados de manera consistente y estructurada.\nReduce el riesgo de errores humanos al centralizar la lógica de creación de partidas.\nFacilita el seguimiento y registro de las partidas en la base de datos.\nNOTA: Solo chat_id, personaje_id y enemigo_id son obligatorios. Los campos no rellenados serán null.\n\nPaso 3: Generación de Narrativa Dinámica\nAcción: Integrar todos los elementos previamente obtenidos (enemigo, reglas) en una narrativa fluida y envolvente.\nRespuesta Detallada Requerida:\nNarrativa inicial que describe el entorno, el enfrentamiento y las posibles acciones del jugador.\nResultados claros de las tiradas de dados y cómo afectan al desarrollo del combate.\nEjemplo de Salida:\n\nEstás explorando una cueva oscura cuando un esqueleto se interpone en tu camino. Lanzas un dado de iniciativa y obtienes un 17, tomando el control del primer turno. Decides atacar, lanzando tu espada hacia el enemigo. Tu dado de ataque muestra un 19 (+3 por destreza), suficiente para superar su defensa de 12. Ruedas un dado de daño (d8) y obtienes un 6, infligiendo un total de 6 puntos de daño al esqueleto.\nEl esqueleto retrocede, visiblemente herido. Realiza una comprobación de moral, lanzando un dado de 20 que resulta en un 5 (+2 por coraje básico). Como su resultado es menor a 10, decide huir hacia las sombras. Ahora puedes perseguirlo o continuar explorando la cueva.\nValidación de Ejecución Obligatoria\nRequisito: Todos los pasos deben ejecutarse en el orden especificado.\nVerificación Automática: Antes de avanzar al siguiente paso, cada tool debe confirmar su ejecución exitosa mediante una respuesta detallada.\nResumen Final\nEjecución Garantizada: Todos los pasos se han completado en orden.\nConfirmación de Datos: Cada paso ha proporcionado respuestas detalladas y confirmaciones de éxito.\nCreación de Partida Exitosa: La narrativa inicial se ha generado e insertado correctamente en la base de datos, preparando al jugador para una experiencia inmersiva y dinámica.\nRECUERDA: Las preguntas o consultas solo serán respondidas AL FINAL del proceso, después de la ejecución exitosa del tool obligatorio \"Crear Partida\".",
+          "returnIntermediateSteps": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.8,
+      "position": [
+        -1196,
+        2220
+      ],
+      "id": "eda138df-c99f-40c0-adc7-c987b1c5ed03",
+      "name": "Creación de partidas",
+      "executeOnce": true,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "url": "https://clayadavis.gitlab.io/osr-bestiary/bestiary/bfrpg/field-guide-1/",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -3120,
+        2040
+      ],
+      "id": "ec372108-833d-412e-a7b2-309bcfef649e",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "jsCode": "const html = $input.first().json.data;\n\nconst hrefRegex = /href=\"([^.#\"]+)\"/g;\nconst links = [];\nlet match;\nwhile ((match = hrefRegex.exec(html)) !== null) {\n  links.push('https://clayadavis.gitlab.io/osr-bestiary/bestiary/bfrpg/field-guide-1/' + match[1]);  // Extraer el href de la coincidencia\n}\n\nreturn { json: { links } };\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -2900,
+        2040
+      ],
+      "id": "2a60c0aa-9ebf-4c65-b833-3b31aeacc6ab",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.links}}",
+        "options": {
+          "batching": {
+            "batch": {}
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -2240,
+        2040
+      ],
+      "id": "215bbbb6-d1ce-4866-a5a1-c852a01f4eaa",
+      "name": "HTTP Request1"
+    },
+    {
+      "parameters": {
+        "jsCode": "let htmlContent = $input.first().json.data;\n\n// Extraer el nombre de la criatura\nlet nombreMatch = htmlContent.match(/class=\"u-url\">([^<]+)<\\/a>/);\nlet nombre = nombreMatch ? nombreMatch[1].trim() : null;\n\n// Limpiar el contenido eliminando las etiquetas HTML\nlet cleanedContent = htmlContent.replace(/<[^>]*>/g, '');\n\n// Eliminar las cadenas específicas que mencionas\ncleanedContent = cleanedContent.replace(/Clayton A Davis\\n- Powered by Nikola\\non GitLab pages/g, '');\n\n// Usar expresiones regulares para extraer las claves y valores\nlet armorClass = cleanedContent.match(/Armor Class:\\s*(\\d+)/);\nlet hitDice = cleanedContent.match(/Hit Dice:\\s*([\\d\\*]+)/);\nlet attacks = cleanedContent.match(/No\\. of Attacks:\\s*(.*)/);\nlet damage = cleanedContent.match(/Damage:\\s*(.*)/);\nlet movement = cleanedContent.match(/Movement:\\s*(.*)/);\nlet appearing = cleanedContent.match(/No\\. Appearing:\\s*(.*)/);\nlet saveAs = cleanedContent.match(/Save As:\\s*(.*)/);\nlet morale = cleanedContent.match(/Morale:\\s*(\\d+)/);\nlet treasureType = cleanedContent.match(/Treasure Type:\\s*(.*)/);\nlet xp = cleanedContent.match(/XP:\\s*(\\d+)/);\n\n// Extraer la descripción, que está después de XP pero sin incluir el XP\nlet description = cleanedContent.split(\"XP:\")[1]?.trim();\n\n// Asegurarnos de que la descripción no contenga el valor de XP\nif (description && description.includes(xp ? xp[1] : '')) {\n  description = description.replace(xp[1], '').trim();\n}\n\n// Construir el objeto JSON con los datos extraídos\nreturn {\n  json: {\n    name: nombre,\n    armorClass: armorClass ? armorClass[1] : null,\n    hitDice: hitDice ? hitDice[1] : null,\n    attacks: attacks ? attacks[1].trim() : null,\n    damage: damage ? damage[1].trim() : null,\n    movement: movement ? movement[1].trim() : null,\n    appearing: appearing ? appearing[1].trim() : null,\n    saveAs: saveAs ? saveAs[1].trim() : null,\n    morale: morale ? morale[1] : null,\n    treasureType: treasureType ? treasureType[1].trim() : null,\n    xp: xp ? xp[1] : null,\n    description: description ? description : null\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -2020,
+        2040
+      ],
+      "id": "e5002bf7-56a9-407f-bc72-38ff59a84256",
+      "name": "Code1"
+    },
+    {
+      "parameters": {
+        "batchSize": "=1",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -2460,
+        2040
+      ],
+      "id": "2d802da6-7ab1-4921-8e31-6415c7f04e98",
+      "name": "Loop Over Items",
+      "retryOnFail": false,
+      "maxTries": 5,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "entities",
+          "mode": "list",
+          "cachedResultName": "entities"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {
+            "id": 0,
+            "created_at": "2025-03-27T00:21:36"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "created_at",
+              "displayName": "created_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "armorClass",
+              "displayName": "armorClass",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "hitDice",
+              "displayName": "hitDice",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "attacks",
+              "displayName": "attacks",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "damage",
+              "displayName": "damage",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "movement",
+              "displayName": "movement",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "appearing",
+              "displayName": "appearing",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "saveAs",
+              "displayName": "saveAs",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "name",
+              "displayName": "name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "morale",
+              "displayName": "morale",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "treasureType",
+              "displayName": "treasureType",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "xp",
+              "displayName": "xp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "description",
+              "displayName": "description",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -1800,
+        2040
+      ],
+      "id": "d7402fec-9788-4318-a961-bd2e4b340a45",
+      "name": "Postgres",
+      "executeOnce": false,
+      "credentials": {
+        "postgres": {
+          "id": "lHtGdq0sojTCEI27",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "amount": 0.3
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        -1580,
+        2120
+      ],
+      "id": "d5f09a8a-f714-43a0-ad93-ac55855a71d7",
+      "name": "Wait",
+      "webhookId": "49294744-28ae-49cd-b4f8-9d0204bb2a4c"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "links",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        -2680,
+        2040
+      ],
+      "id": "eeb0a4fa-4a67-424b-a5d5-6bb9841ac412",
+      "name": "Split Out"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        -2020,
+        1800
+      ],
+      "id": "c28ab9bc-00ef-4c9c-9627-c71920af8905",
+      "name": "No Operation, do nothing"
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "https://docs.google.com/document/d/1dqOtZcBbfUd4lphoQjLM7kFrBPFve4QT_SU83sVbWrg/edit?usp=drive_link",
+          "mode": "url"
+        },
+        "options": {}
+      },
+      "id": "f212c2e7-aa5b-4aa8-bfff-19275ffb457b",
+      "name": "Download File",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -2900,
+        2580
+      ],
+      "executeOnce": true,
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "8ehOA9cnTLe9a11T",
+          "name": "Google Drive account 4"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -3120,
+        2580
+      ],
+      "id": "471a6861-60e3-4404-8a80-526a2b69d470",
+      "name": "When clicking ‘Test workflow’"
+    },
+    {
+      "parameters": {
+        "dataType": "binary",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1,
+      "position": [
+        -2560,
+        2800
+      ],
+      "id": "6cef6ee4-5cd9-4cf9-8f6b-e09a3b54aa79",
+      "name": "Default Data Loader1"
+    },
+    {
+      "parameters": {
+        "chunkOverlap": 100,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.textSplitterRecursiveCharacterTextSplitter",
+      "typeVersion": 1,
+      "position": [
+        -2460,
+        3000
+      ],
+      "id": "9c9bd720-2378-4248-9403-855fa0e02025",
+      "name": "Recursive Character Text Splitter1"
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "tableName": {
+          "__rl": true,
+          "value": "documents",
+          "mode": "list",
+          "cachedResultName": "documents"
+        },
+        "options": {
+          "queryName": "match_documents"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1,
+      "position": [
+        -2660,
+        2580
+      ],
+      "id": "fe133cb3-4d76-42cd-a517-358e5dc29430",
+      "name": "Supabase Vector Store4",
+      "alwaysOutputData": true,
+      "credentials": {
+        "supabaseApi": {
+          "id": "1TvVD721jKgcGZjI",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "text-embedding-ada-002",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        -2680,
+        2800
+      ],
+      "id": "715ff0a9-01fd-4c48-96da-5da950faa81f",
+      "name": "Embeddings OpenAI4",
+      "credentials": {
+        "openAiApi": {
+          "id": "zuAWSZL3GVHZdsg7",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "deleteTable",
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "personajes",
+          "mode": "list",
+          "cachedResultName": "personajes"
+        },
+        "deleteCommand": "delete",
+        "where": {
+          "values": [
+            {
+              "column": "chat_id",
+              "value": "={{ $('Telegram Trigger').item.json.message.chat.id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgresTool",
+      "typeVersion": 2.6,
+      "position": [
+        -840,
+        1615
+      ],
+      "id": "5072f34f-47e6-4abf-9fa3-702ce0ac3fec",
+      "name": "Borrar un personaje2",
+      "credentials": {
+        "postgres": {
+          "id": "lHtGdq0sojTCEI27",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## WORKFLOW PRINCIPAL\n\n"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        320
+      ],
+      "id": "414ed029-2a57-4005-9874-a1ccd7312a0e",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "## WORKFLOW PARA SUBIR REGLAS\n"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -2220,
+        2500
+      ],
+      "id": "5186bfb1-5730-4a04-9d26-c15dcf9575d3",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "content": "## WORFLOW DE SCRAPING\n\nSE EJECUTA INICIALMENTE PARA POBLAR LA BASE DE DATOS con MONSTRUOS",
+        "height": 140,
+        "width": 300
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -1880,
+        1760
+      ],
+      "id": "15cb16e9-4e9e-4a3f-9702-90870fae0bbd",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "=Vaya, parece que ha habido un problema, vuelve a intentarlo más tarde",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -226,
+        1470
+      ],
+      "id": "29336c8e-b670-4024-b6a6-6f4b7bed268d",
+      "name": "Telegram Errores",
+      "webhookId": "5dc7c906-5a9f-4245-98d6-6e8edbbb234f",
+      "executeOnce": true,
+      "credentials": {
+        "telegramApi": {
+          "id": "cQnuEkXDw2iVEh9Z",
+          "name": "Telegram account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres Chat Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Seleccionar último personaje",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Answer questions with a vector store": {
+      "ai_tool": [
+        [
+          {
+            "node": "Actualizador de partidas",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase Vector Store1": {
+      "ai_vectorStore": [
+        [
+          {
+            "node": "Answer questions with a vector store",
+            "type": "ai_vectorStore",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Answer questions with a vector store",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings OpenAI": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Supabase Vector Store1",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Text Classifier": {
+      "main": [
+        [
+          {
+            "node": "Creación de personajes",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Actualizador de partidas",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Eliminar personajes",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Creación de partidas",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Seleccion personaje",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Listar personajes",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Agente final",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Saludar al usuario",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres Chat Memory2": {
+      "ai_memory": [
+        [
+          {
+            "node": "Creación de personajes",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model2": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Creación de personajes",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres Chat Memory3": {
+      "ai_memory": [
+        [
+          {
+            "node": "Actualizador de partidas",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model3": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Actualizador de partidas",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Actualizar pelea": {
+      "ai_tool": [
+        [
+          {
+            "node": "Actualizador de partidas",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model2": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres Chat Memory4": {
+      "ai_memory": [
+        [
+          {
+            "node": "Eliminar personajes",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Eliminar personajes",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Borrar un personaje": {
+      "ai_tool": [
+        [
+          {
+            "node": "Eliminar personajes",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres Chat Memory1": {
+      "ai_memory": [
+        [
+          {
+            "node": "Agente final",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Crear nuevo personaje": {
+      "ai_tool": [
+        [
+          {
+            "node": "Creación de personajes",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres Chat Memory5": {
+      "ai_memory": [
+        [
+          {
+            "node": "Creación de partidas",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model4": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Creación de partidas",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Seleccionar monstruo aleatorio": {
+      "ai_tool": [
+        [
+          {
+            "node": "Creación de partidas",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Seleccionar último personaje": {
+      "main": [
+        [
+          {
+            "node": "Seleccionar sesión",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Seleccionar sesión": {
+      "main": [
+        [
+          {
+            "node": "Seleccionar última pelea",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Seleccionar última pelea": {
+      "main": [
+        [
+          {
+            "node": "Text Classifier",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model5": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Agente final",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Actualizador de partidas": {
+      "main": [
+        [
+          {
+            "node": "Agente final",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Telegram Errores",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Creación de personajes": {
+      "main": [
+        [
+          {
+            "node": "Agente final",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Telegram Errores",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Answer questions with a vector store1": {
+      "ai_tool": [
+        [
+          {
+            "node": "Creación de partidas",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase Vector Store": {
+      "ai_vectorStore": [
+        [
+          {
+            "node": "Answer questions with a vector store1",
+            "type": "ai_vectorStore",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Answer questions with a vector store1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings OpenAI1": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Supabase Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Eliminar personajes": {
+      "main": [
+        [
+          {
+            "node": "Agente final",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Telegram Errores",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Answer questions with a vector store2": {
+      "ai_tool": [
+        [
+          {
+            "node": "Agente final",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase Vector Store2": {
+      "ai_vectorStore": [
+        [
+          {
+            "node": "Answer questions with a vector store2",
+            "type": "ai_vectorStore",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model3": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Answer questions with a vector store2",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings OpenAI2": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Supabase Vector Store2",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Borrar un personaje1": {
+      "ai_tool": [
+        [
+          {
+            "node": "Actualizador de partidas",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Actualizar datos de un personaje": {
+      "ai_tool": [
+        [
+          {
+            "node": "Actualizador de partidas",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres Chat Memory8": {
+      "ai_memory": [
+        [
+          {
+            "node": "Seleccion personaje",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model8": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Seleccion personaje",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Seleccion personaje": {
+      "main": [
+        [
+          {
+            "node": "Agente final",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Telegram Errores",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Actualizar sesion": {
+      "ai_tool": [
+        [
+          {
+            "node": "Seleccion personaje",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Seleccionar personajes de usuario2": {
+      "ai_tool": [
+        [
+          {
+            "node": "Listar personajes",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres Chat Memory9": {
+      "ai_memory": [
+        [
+          {
+            "node": "Listar personajes",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model9": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Listar personajes",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Listar personajes": {
+      "main": [
+        [
+          {
+            "node": "Telegram1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Seleccionar personajes de usuario3": {
+      "ai_tool": [
+        [
+          {
+            "node": "Seleccion personaje",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres Chat Memory10": {
+      "ai_memory": [
+        [
+          {
+            "node": "Saludar al usuario",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model10": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Saludar al usuario",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Saludar al usuario": {
+      "main": [
+        [
+          {
+            "node": "Telegram1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Telegram Errores",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agente final": {
+      "main": [
+        [
+          {
+            "node": "Telegram1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Answer questions with a vector store3": {
+      "ai_tool": [
+        [
+          {
+            "node": "Saludar al usuario",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase Vector Store3": {
+      "ai_vectorStore": [
+        [
+          {
+            "node": "Answer questions with a vector store3",
+            "type": "ai_vectorStore",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model5": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Answer questions with a vector store3",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings OpenAI3": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Supabase Vector Store3",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model11": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Text Classifier",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Crear partida": {
+      "ai_tool": [
+        [
+          {
+            "node": "Creación de partidas",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Creación de partidas": {
+      "main": [
+        [
+          {
+            "node": "Agente final",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Telegram Errores",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "Code1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code1": {
+      "main": [
+        [
+          {
+            "node": "Postgres",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [
+          {
+            "node": "No Operation, do nothing",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download File": {
+      "main": [
+        [
+          {
+            "node": "Supabase Vector Store4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When clicking ‘Test workflow’": {
+      "main": [
+        [
+          {
+            "node": "Download File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Default Data Loader1": {
+      "ai_document": [
+        [
+          {
+            "node": "Supabase Vector Store4",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Recursive Character Text Splitter1": {
+      "ai_textSplitter": [
+        [
+          {
+            "node": "Default Data Loader1",
+            "type": "ai_textSplitter",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings OpenAI4": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Supabase Vector Store4",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Borrar un personaje2": {
+      "ai_tool": [
+        [
+          {
+            "node": "Eliminar personajes",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "fe7ef01b-c467-4a41-a0e1-1a139576b3a6",
+  "meta": {
+    "instanceId": "016f8286847923bb2ad5dced302df110b83096571d45812d495295d199c6dfa4"
+  },
+  "id": "2ZUs1jR1o1nKl88A",
+  "tags": []
+}
