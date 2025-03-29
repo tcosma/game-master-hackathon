@@ -4,17 +4,13 @@
 
 1. **Errores en las Peleas**
    - **Problema**: Desbalances en cálculos.
-   - **Solución**: Revisar fórmulas de daño y moral.
+   - **Solución**: Mejorar el prompt.
 
 2. **Errores de Clasificación de Texto**
    - **Problema**: Clasificación incorrecta.
-   - **Solución**: Mejorar el modelo de clasificación.
+   - **Solución**: Mejorar el modelo de clasificación (dando más detalles).
 
-3. **Errores de Conexión con Supabase**
-   - **Problema**: Pérdida de conexión.
-   - **Solución**: Mecanismos de reintentos automáticos.
-
-4. **Errores de Scraping de Monstruos**
+3. **Errores de Scraping de Monstruos**
    - **Problema**: Datos inconsistentes.
    - **Solución**: Validar datos scrapeados.
 

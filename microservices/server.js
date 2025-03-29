@@ -7,8 +7,7 @@ const logger = {
     info: (msg) => console.log(msg),
     error: (msg) => console.error(msg)
 };
-
-const DATABASE_URL = "postgresql://postgres.mzrojtkzrlnkorthbwtc:WQOLNsCLxomn9uCN@aws-0-eu-central-1.pooler.supabase.com:6543/postgres";
+os.environ["DATABASE_URL"] = DATABASE_URL
 
 const pool = new Pool({
     connectionString: DATABASE_URL

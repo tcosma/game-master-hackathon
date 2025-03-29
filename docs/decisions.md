@@ -14,9 +14,9 @@
    - **Razón**: Optimizar la búsqueda de reglas.
    - **Beneficios**: Búsqueda rápida y precisa.
 
-4. **Continue on Error**
-   - **Razón**: Garantizar que el sistema no se bloquee ante errores.
-   - **Beneficios**: Experiencia de usuario más fluida.
+4. **Uso de modelos de 'pequeño' tamaño**
+   - **Razón**: Minimizar costes máximizando la experiencia de usuario.
+   - **Beneficios**: Mínimos costes sin afectar la experiencia de usuario.
 
 
 ## Decisiones de Diseño
@@ -24,6 +24,8 @@
 1. **Persistencia de Sesiones**
    - **Razón**: Permitir cambios entre personajes.
    - **Implementación**: Campo `updated_at` en la tabla `sessions`.
+   - **Beneficio**: Permitir continuar batallas entre diferentes personajes.
+
 
 2. **Evitar Duplicados de Personajes**
    - **Razón**: Asegurar nombres únicos para un mismo usuario.
