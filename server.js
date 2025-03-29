@@ -260,6 +260,21 @@ app.post('/character', async (req, res) => {
             return res.status(400).json({ error: 'Both name (nombre) and chat_id are required' });
         }
 
+        // Check if character with same name already exists for this chat_id
+        const checkQuery = `
+            SELECT id FROM personajes
+            WHERE nombre = $1 AND chat_id = $2
+        `;
+
+        const checkResult = await pool.query(checkQuery, [nombre, chat_id]);
+
+        if (checkResult.rows.length > 0) {
+            return res.status(409).json({
+                error: 'A character with this name already exists for this chat',
+                existingCharacterId: checkResult.rows[0].id
+            });
+        }
+
         // Insert the new character
         const query = `
             INSERT INTO personajes (nombre, chat_id)
