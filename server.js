@@ -300,6 +300,128 @@ app.post('/character', async (req, res) => {
     }
 });
 
+// Create fight endpoint
+app.post('/create-fight', async (req, res) => {
+    try {
+        const {
+            chat_id,
+            personaje_id,
+            monstruo_id,
+            initiative_roll,
+            player_action,
+            player_attack_roll,
+            enemy_armor_defense,
+            damage_roll,
+            damage_dealt,
+            enemy_moral_roll,
+            enemy_moral_check,
+            fight_state
+        } = req.body;
+
+        // Validate required fields
+        if (!chat_id || !personaje_id || !monstruo_id) {
+            return res.status(400).json({ error: 'chat_id, personaje_id, and monstruo_id are required' });
+        }
+
+        // Check if character exists and belongs to the chat
+        const characterQuery = `
+            SELECT * FROM personajes
+            WHERE id = $1 AND chat_id = $2
+        `;
+        const characterResult = await pool.query(characterQuery, [personaje_id, chat_id]);
+
+        if (characterResult.rows.length === 0) {
+            return res.status(404).json({ error: 'Character not found or does not belong to this chat' });
+        }
+
+        // Check if monster exists
+        const monsterQuery = `
+            SELECT * FROM monstruos
+            WHERE id = $1
+        `;
+        const monsterResult = await pool.query(monsterQuery, [monstruo_id]);
+
+        if (monsterResult.rows.length === 0) {
+            return res.status(404).json({ error: 'Monster not found' });
+        }
+
+        // Create the fight
+        const createFightQuery = `
+            INSERT INTO fights (
+                personaje_id, 
+                monstruo_id, 
+                initiative_roll,
+                player_action,
+                player_attack_roll,
+                enemy_armor_defense,
+                damage_roll,
+                damage_dealt,
+                enemy_moral_roll,
+                enemy_moral_check,
+                fight_state
+            )
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+            RETURNING *;
+        `;
+
+        const fightValues = [
+            personaje_id,
+            monstruo_id,
+            initiative_roll || null,
+            player_action || null,
+            player_attack_roll || null,
+            enemy_armor_defense || null,
+            damage_roll || null,
+            damage_dealt || null,
+            enemy_moral_roll || null,
+            enemy_moral_check || null,
+            fight_state || 'in_progress'
+        ];
+
+        const fightResult = await pool.query(createFightQuery, fightValues);
+        const newFight = fightResult.rows[0];
+
+        // Check if a session exists with this active_character_id
+        const sessionQuery = `
+            SELECT * FROM sessions
+            WHERE active_character_id = $1
+        `;
+        const sessionResult = await pool.query(sessionQuery, [personaje_id]);
+
+        let sessionResponse;
+
+        if (sessionResult.rows.length > 0) {
+            // Update existing session
+            const updateSessionQuery = `
+                UPDATE sessions
+                SET last_fight_id = $1, updated_at = NOW()
+                WHERE active_character_id = $2
+                RETURNING *;
+            `;
+            const updateResult = await pool.query(updateSessionQuery, [newFight.id, personaje_id]);
+            sessionResponse = updateResult.rows[0];
+        } else {
+            // Create new session
+            const createSessionQuery = `
+                INSERT INTO sessions (active_character_id, last_fight_id, chat_id, created_at, updated_at)
+                VALUES ($1, $2, $3, NOW(), NOW())
+                RETURNING *;
+            `;
+            const createResult = await pool.query(createSessionQuery, [personaje_id, newFight.id, chat_id]);
+            sessionResponse = createResult.rows[0];
+        }
+
+        return res.status(201).json({
+            message: 'Fight created successfully',
+            fight: newFight,
+            session: sessionResponse
+        });
+    } catch (e) {
+        logger.error(`Error in create fight endpoint: ${e.message}`);
+        return res.status(500).json({ error: `Server error: ${e.message}` });
+    }
+});
+
 // Start the server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, '0.0.0.0', async () => {
