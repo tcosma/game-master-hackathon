@@ -54,7 +54,7 @@ class CharacterRetriever {
     static async getCharactersByChatId(chatId) {
         try {
             const query = `
-        SELECT *
+        SELECT id, nombre, puntos_de_vida
         FROM personajes
         WHERE chat_id = $1
         ORDER BY id DESC;
