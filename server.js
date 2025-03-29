@@ -77,11 +77,11 @@ app.get('/', (req, res) => {
 // Update fight endpoint
 app.put('/update-fight', async (req, res) => {
     try {
-        const chatId = req.query.chat_id;
+        const fightId = req.query.id;
         const updateData = req.body;
 
-        if (!chatId) {
-            return res.status(400).json({ error: 'Chat ID is required' });
+        if (!fightId) {
+            return res.status(400).json({ error: 'Fight ID is required' });
         }
 
         if (Object.keys(updateData).length === 0) {
@@ -90,8 +90,8 @@ app.put('/update-fight', async (req, res) => {
 
         // Build SET clause dynamically from request body
         const setClauses = [];
-        const values = [chatId];
-        let paramCount = 2; // Starting from $2 since $1 is chatId
+        const values = [fightId];
+        let paramCount = 2; // Starting from $2 since $1 is fightId
 
         for (const [key, value] of Object.entries(updateData)) {
             setClauses.push(`${key} = $${paramCount}`);
@@ -102,30 +102,16 @@ app.put('/update-fight', async (req, res) => {
         const setClause = setClauses.join(', ');
 
         const query = `
-            WITH last_session AS (
-                SELECT id, active_character_id 
-                FROM sessions 
-                WHERE chat_id = $1
-                ORDER BY updated_at DESC 
-                LIMIT 1
-            ),
-            last_fight AS (
-                SELECT id 
-                FROM fights 
-                WHERE personaje_id = (SELECT active_character_id FROM last_session)
-                ORDER BY id DESC 
-                LIMIT 1
-            )
             UPDATE fights
             SET ${setClause}
-            WHERE id = (SELECT id FROM last_fight)
+            WHERE id = $1
             RETURNING *;
         `;
 
         const result = await pool.query(query, values);
 
         if (result.rowCount === 0) {
-            return res.status(404).json({ message: 'No fight found to update' });
+            return res.status(404).json({ message: 'No fight found with the provided ID' });
         }
 
         return res.status(200).json({
