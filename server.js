@@ -322,14 +322,9 @@ app.post('/create-fight', async (req, res) => {
             chat_id,
             personaje_id,
             monstruo_id,
-            initiative_roll,
-            player_action,
-            player_attack_roll,
             enemy_armor_defense,
-            damage_roll,
-            damage_dealt,
             enemy_moral_roll,
-            enemy_moral_check,
+            enemy_moral_check
         } = req.body;
 
         // Validate required fields
@@ -348,47 +343,27 @@ app.post('/create-fight', async (req, res) => {
             return res.status(404).json({ error: 'Character not found or does not belong to this chat' });
         }
 
-        // Check if monster exists
-        const monsterQuery = `
-            SELECT * FROM monstruos
-            WHERE id = $1
-        `;
-        const monsterResult = await pool.query(monsterQuery, [monstruo_id]);
-
-        if (monsterResult.rows.length === 0) {
-            return res.status(404).json({ error: 'Monster not found' });
-        }
-
-        // Create the fight
+        // Create the fight with only the provided fields
         const createFightQuery = `
             INSERT INTO fights (
                 personaje_id, 
                 monstruo_id, 
-                initiative_roll,
-                player_action,
-                player_attack_roll,
                 enemy_armor_defense,
-                damage_roll,
-                damage_dealt,
                 enemy_moral_roll,
                 enemy_moral_check,
+                fight_state
             )
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+            VALUES ($1, $2, $3, $4, $5, $6)
             RETURNING *;
         `;
 
         const fightValues = [
             personaje_id,
             monstruo_id,
-            initiative_roll || null,
-            player_action || null,
-            player_attack_roll || null,
             enemy_armor_defense || null,
-            damage_roll || null,
-            damage_dealt || null,
             enemy_moral_roll || null,
             enemy_moral_check || null,
-            fight_state || 'in_progress'
+            'in_progress' // default fight_state value
         ];
 
         const fightResult = await pool.query(createFightQuery, fightValues);
