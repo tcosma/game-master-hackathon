@@ -113,49 +113,32 @@ app.put('/update-fight', async (req, res) => {
         // Add the fight ID as the last parameter
         values.push(fightId);
 
-        // Begin transaction
-        const client = await pool.connect();
-        
-        try {
-            await client.query('BEGIN');
-            
-            // 1. Update the fight
-            const updateQuery = `
-                UPDATE fights
-                SET ${setItems.join(', ')}
-                WHERE id = $${paramIndex}
-                RETURNING *;
-            `;
-            
-            const fightResult = await client.query(updateQuery, values);
-            
-            if (fightResult.rows.length === 0) {
-                await client.query('ROLLBACK');
-                return res.status(404).json({ error: 'Fight not found' });
-            }
-            
-            // 2. Update the session timestamp
-            const updateSessionQuery = `
-                UPDATE sessions
-                SET updated_at = NOW()
-                WHERE last_fight_id = $1;
-            `;
-            
-            await client.query(updateSessionQuery, [fightId]);
-            
-            // Commit transaction
-            await client.query('COMMIT');
-            
-            return res.status(200).json({
-                message: 'Fight updated successfully',
-                fight: fightResult.rows[0]
-            });
-        } catch (error) {
-            await client.query('ROLLBACK');
-            throw error;
-        } finally {
-            client.release();
+        const updateQuery = `
+            UPDATE fights
+            SET ${setItems.join(', ')}
+            WHERE id = $${paramIndex}
+            RETURNING *;
+        `;
+
+        const result = await pool.query(updateQuery, values);
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Fight not found' });
         }
+
+        // Update the timestamp in the sessionsm table
+        const sessionUpdateQuery = `
+            UPDATE sessions 
+            SET updated_at = NOW()
+            WHERE last_fight_id = $1
+        `;
+
+        await pool.query(sessionUpdateQuery, [fightId]);
+
+        return res.status(200).json({
+            message: 'Fight updated successfully',
+            fight: result.rows[0]
+        });
     } catch (e) {
         logger.error(`Error in update fight endpoint: ${e.message}`);
         return res.status(500).json({ error: `Server error: ${e.message}` });
