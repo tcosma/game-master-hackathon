@@ -266,6 +266,21 @@ app.post('/character', async (req, res) => {
             return res.status(400).json({ error: 'Both name (nombre) and chat_id are required' });
         }
 
+        // Check if the character limit has been reached
+        const countQuery = `
+            SELECT COUNT(*) FROM personajes
+            WHERE chat_id = $1
+        `;
+
+        const countResult = await pool.query(countQuery, [chat_id]);
+        const characterCount = parseInt(countResult.rows[0].count);
+
+        if (characterCount >= 10) {
+            return res.status(403).json({
+                error: 'Character limit reached. Maximum 10 characters allowed per chat.'
+            });
+        }
+
         // Check if character with same name already exists for this chat_id
         const checkQuery = `
             SELECT id FROM personajes
