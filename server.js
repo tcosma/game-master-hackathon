@@ -126,14 +126,14 @@ app.put('/update-fight', async (req, res) => {
             return res.status(404).json({ error: 'Fight not found' });
         }
 
-        // Update the timestamp in the sessionsm table
-        const sessionUpdateQuery = `
+        // Also update the timestamp in the sessions table
+        const sessionsUpdateQuery = `
             UPDATE sessions 
             SET updated_at = NOW()
             WHERE last_fight_id = $1
         `;
 
-        await pool.query(sessionUpdateQuery, [fightId]);
+        await pool.query(sessionsUpdateQuery, [fightId]);
 
         return res.status(200).json({
             message: 'Fight updated successfully',
