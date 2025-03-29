@@ -275,7 +275,7 @@ app.post('/character', async (req, res) => {
         const countResult = await pool.query(countQuery, [chat_id]);
         const characterCount = parseInt(countResult.rows[0].count);
 
-        if (characterCount >= 10) {
+        if (characterCount >= 5) {
             return res.status(403).json({
                 error: 'Character limit reached. Maximum 10 characters allowed per chat.'
             });
