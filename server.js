@@ -250,6 +250,35 @@ app.delete('/characters', async (req, res) => {
     }
 });
 
+// Create character endpoint
+app.post('/character', async (req, res) => {
+    try {
+        const { nombre, chat_id } = req.body;
+
+        // Validate required fields
+        if (!nombre || !chat_id) {
+            return res.status(400).json({ error: 'Both name (nombre) and chat_id are required' });
+        }
+
+        // Insert the new character
+        const query = `
+            INSERT INTO personajes (nombre, chat_id)
+            VALUES ($1, $2)
+            RETURNING *;
+        `;
+
+        const result = await pool.query(query, [nombre, chat_id]);
+
+        return res.status(201).json({
+            message: 'Character created successfully',
+            character: result.rows[0]
+        });
+    } catch (e) {
+        logger.error(`Error in create character endpoint: ${e.message}`);
+        return res.status(500).json({ error: `Server error: ${e.message}` });
+    }
+});
+
 // Start the server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, '0.0.0.0', async () => {
