@@ -78,47 +78,58 @@ app.get('/', (req, res) => {
 app.put('/update-fight', async (req, res) => {
     try {
         const fightId = req.query.id;
-        const updateData = req.body;
-
         if (!fightId) {
-            return res.status(400).json({ error: 'Fight ID is required' });
+            return res.status(400).json({ error: 'Fight ID is required as a query parameter' });
         }
 
+        const updateData = req.body;
         if (Object.keys(updateData).length === 0) {
             return res.status(400).json({ error: 'No update data provided' });
         }
 
-        // Build SET clause dynamically from request body
-        const setClauses = [];
-        const values = [fightId];
-        let paramCount = 2; // Starting from $2 since $1 is fightId
+        // Build dynamic SET clause for SQL update
+        const validFields = [
+            'initiative_roll', 'player_action', 'player_attack_roll',
+            'enemy_armor_defense', 'damage_roll', 'damage_dealt',
+            'enemy_moral_roll', 'enemy_moral_check', 'fight_state'
+        ];
 
-        for (const [key, value] of Object.entries(updateData)) {
-            setClauses.push(`${key} = $${paramCount}`);
-            values.push(value);
-            paramCount++;
+        const setItems = [];
+        const values = [];
+        let paramIndex = 1;
+
+        validFields.forEach(field => {
+            if (updateData[field] !== undefined) {
+                setItems.push(`${field} = $${paramIndex}`);
+                values.push(updateData[field]);
+                paramIndex++;
+            }
+        });
+
+        if (setItems.length === 0) {
+            return res.status(400).json({ error: 'No valid fields to update' });
         }
 
-        const setClause = setClauses.join(', ');
+        // Add the fight ID as the last parameter
+        values.push(fightId);
 
-        const query = `
+        const updateQuery = `
             UPDATE fights
-            SET ${setClause}
-            WHERE id = $1
+            SET ${setItems.join(', ')}
+            WHERE id = $${paramIndex}
             RETURNING *;
         `;
 
-        const result = await pool.query(query, values);
+        const result = await pool.query(updateQuery, values);
 
-        if (result.rowCount === 0) {
-            return res.status(404).json({ message: 'No fight found with the provided ID' });
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Fight not found' });
         }
 
         return res.status(200).json({
             message: 'Fight updated successfully',
-            updatedFight: result.rows[0]
+            fight: result.rows[0]
         });
-
     } catch (e) {
         logger.error(`Error in update fight endpoint: ${e.message}`);
         return res.status(500).json({ error: `Server error: ${e.message}` });
